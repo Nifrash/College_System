@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Submit Assignment{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">Submit Assignment</h4>
+    </div>
+
+    <div class="card-body">
+        <p><strong>Assignment:</strong> {{ assignment.title }}</p>
+        <p><strong>Course:</strong> {{ assignment.course.course_name }}</p>
+        <p><strong>Deadline:</strong> {{ assignment.deadline }}</p>
+
+        {% if existing_submission %}
+            <div class="alert alert-info">
+                You already submitted this assignment. Uploading again will replace your previous file.
+            </div>
+
+            <p>
+                <strong>Current File:</strong>
+                <a href="{{ existing_submission.file.url }}" target="_blank">
+                    View Submitted File
+                </a>
+            </p>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button type="submit" class="btn btn-success">
+                Submit Assignment
+            </button>
+
+            <a href="{% url 'student_dashboard' %}" class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

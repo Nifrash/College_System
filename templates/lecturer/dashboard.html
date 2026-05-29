@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Lecturer Dashboard{% endblock %}
+
+{% block content %}
+
+<style>
+    .hero-card {
+        background: linear-gradient(135deg, #0f172a, #2563eb);
+        color: white;
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+    }
+
+    .stat-card {
+        border: 0;
+        border-radius: 18px;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+        transition: 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 12px;
+    }
+
+    .soft-blue { background: #dbeafe; color: #1d4ed8; }
+    .soft-green { background: #dcfce7; color: #15803d; }
+    .soft-yellow { background: #fef3c7; color: #b45309; }
+    .soft-purple { background: #ede9fe; color: #6d28d9; }
+    .soft-red { background: #fee2e2; color: #b91c1c; }
+
+    .section-card {
+        border: 0;
+        border-radius: 18px;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+    }
+
+    .quick-action {
+        border-radius: 14px;
+        padding: 16px;
+        font-weight: 600;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .table thead th {
+        background: #f8fafc;
+        color: #334155;
+        font-weight: 700;
+    }
+
+    .profile-label {
+        color: #64748b;
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .profile-value {
+        font-weight: 600;
+        color: #0f172a;
+    }
+</style>
+
+<div class="hero-card">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h2 class="mb-1">Lecturer Dashboard</h2>
+            <p class="mb-0 text-white-50">
+                Manage your courses, notes, assignments, submissions, and student marks.
+            </p>
+        </div>
+
+        <div class="text-md-end">
+            <h5 class="mb-0">
+                {{ lecturer.user.get_full_name|default:lecturer.user.username }}
+            </h5>
+            <small class="text-white-50">Lecturer Workspace</small>
+        </div>
+    </div>
+</div>
+
+<!-- PROFILE -->
+<div class="card section-card mb-4">
+    <div class="card-header bg-white border-0">
+        <h5 class="mb-0">Lecturer Profile</h5>
+    </div>
+
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="profile-label">Lecturer ID</div>
+                <div class="profile-value">{{ lecturer }}</div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="profile-label">Full Name</div>
+                <div class="profile-value">
+                    {{ lecturer.user.get_full_name|default:lecturer.user.username }}
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="profile-label">Email</div>
+                <div class="profile-value">{{ lecturer.user.email|default:"-" }}</div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="profile-label">Phone</div>
+                <div class="profile-value">{{ lecturer.phone|default:"-" }}</div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="profile-label">Department</div>
+                <div class="profile-value">{{ lecturer.department|default:"-" }}</div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="profile-label">Specialization</div>
+                <div class="profile-value">{{ lecturer.specialization|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STATS -->
+<div class="row g-3 mb-4">
+
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="icon-box soft-blue">📚</div>
+                <h6 class="text-muted">Assigned Courses</h6>
+                <h3>{{ courses_count }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="icon-box soft-green">📝</div>
+                <h6 class="text-muted">Uploaded Notes</h6>
+                <h3>{{ notes_count }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="icon-box soft-yellow">📌</div>
+                <h6 class="text-muted">Assignments</h6>
+                <h3>{{ assignments_count }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="icon-box soft-purple">📥</div>
+                <h6 class="text-muted">Submissions</h6>
+                <h3>{{ submissions_count }}</h3>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- QUICK ACTIONS -->
+<div class="card section-card mb-4">
+    <div class="card-header bg-white border-0">
+        <h5 class="mb-0">Quick Actions</h5>
+    </div>
+
+    <div class="card-body">
+        <div class="row g-3">
+
+            <div class="col-md-3">
+                <a href="{% url 'lecturer_courses' %}" class="btn btn-primary w-100 quick-action">
+                    <span>📚</span> My Courses
+                </a>
+            </div>
+
+            <div class="col-md-3">
+         <a href="{% url 'schedule_list' %}" class="btn btn-info w-100 quick-action">
+                <span>🗓️</span> Class Schedule </a>
+                </div>
+
+            <div class="col-md-3">
+                <a href="{% url 'upload_note' %}" class="btn btn-success w-100 quick-action">
+                    <span>📝</span> Upload Notes
+                </a>
+            </div>
+
+            <div class="col-md-3">
+                <a href="{% url 'create_assignment' %}" class="btn btn-warning w-100 quick-action">
+                    <span>📌</span> Create Assignment
+                </a>
+            </div>
+
+            <div class="col-md-3">
+                <a href="{% url 'assignment_list' %}" class="btn btn-dark w-100 quick-action">
+                    <span>📥</span> View Submissions
+                </a>
+            </div>
+
+            <div class="col-md-3">
+                <a href="{% url 'all_submissions' %}" class="btn btn-info w-100 quick-action">
+                    <span>📥</span> All Submissions
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ASSIGNED COURSES -->
+<div class="card section-card">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">My Assigned Courses</h5>
+        <span class="badge bg-primary">{{ courses_count }} Courses</span>
+    </div>
+
+    <div class="card-body">
+        {% if courses %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Course Code</th>
+                        <th>Course Name</th>
+                        <th>Credits</th>
+                        <th>Enrolled Students</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for course in courses %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                {{ course.course_code }}
+                            </span>
+                        </td>
+                        <td>{{ course.course_name }}</td>
+                        <td>{{ course.credits }}</td>
+                        <td> <span class="badge bg-success"> {{ course.enrollment_set.count }}  </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-warning mb-0">
+                No courses have been assigned to you yet. Please contact staff/admin.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

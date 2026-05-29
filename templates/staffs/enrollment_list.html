@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %}Enrollments{% endblock %}
 
 {% block content %}
@@ -42,6 +43,13 @@
                             <th>Course Code</th>
                             <th>Course Name</th>
                             <th>Enrolled Date</th>
+                            <th>Mode</th>
+                            <th>Course Fee</th>
+                            <th>Discount</th>
+                            <th>Final Fee</th>
+                            <th>Installments</th>
+                            <th>Installment Amount</th>
+                            <th>Payment Method</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -60,12 +68,16 @@
         <td>{{ enrollment.student.get_full_name }}</td>
 
         <td>{{ enrollment.student.username }}</td>
-
         <td>{{ enrollment.course.course_code }}</td>
-
         <td>{{ enrollment.course.course_name }}</td>
-
         <td>{{ enrollment.enrolled_date }}</td>
+        <td>{{ enrollment.mode_of_study }}</td>
+        <td>{{ enrollment.original_course_fee | intcomma }}</td>
+        <td>{{ enrollment.discount_amount }}</td>
+        <td>{{ enrollment.final_course_fee | intcomma }}</td>
+        <td>{{ enrollment.number_of_installments }}</td>
+        <td>{{ enrollment.installment_amount | floatformat:2 }}</td>
+        <td>{{ enrollment.preferred_payment_method }}</td>
     </tr>
     {% endfor %}
 </tbody>

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Class Schedules{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Class Schedules</h3>
+    <a href="{% url 'create_schedule' %}" class="btn btn-primary">
+        + Create Schedule
+    </a>
+
+    <a href="{% url 'create_schedule_range' %}" class="btn btn-success">
+    + Create Range Schedule
+</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if schedules %}
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Course</th>
+                    <th>Title</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Mode</th>
+                    <th>Location / Link</th>
+                    <th>Hours</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for schedule in schedules %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ schedule.course.course_code }} - {{ schedule.course.course_name }}</td>
+                    <td>{{ schedule.title }}</td>
+                    <td>{{ schedule.class_date }}</td>
+                    <td>{{ schedule.start_time }} - {{ schedule.end_time }}</td>
+                    <td>{{ schedule.mode }}</td>
+                    <td>{{ schedule.location_or_link|default:"-" }}</td>
+                    <td>{{ schedule.covered_hours }}</td>
+                <td>
+                    {% if schedule.class_date >= today %}
+                    <a href="{% url 'edit_schedule' schedule.id %}" class="btn btn-sm btn-warning"> Edit</a>
+                    {% else %}
+                        <span class="badge bg-secondary">Past</span>
+                    {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <div class="alert alert-info mb-0">
+                No class schedules created yet.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

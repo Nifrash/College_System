@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Schedule Range{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">{{ page_title }}</h4>
+    </div>
+
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Course</label>
+                    {{ form.course }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Schedule Title</label>
+                    {{ form.title }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Start Date</label>
+                    {{ form.start_date }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">End Date</label>
+                    {{ form.end_date }}
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Class Days</label>
+                    <div class="row">
+                        {% for checkbox in form.weekdays %}
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    {{ checkbox.tag }}
+                                    <label class="form-check-label">
+                                        {{ checkbox.choice_label }}
+                                    </label>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Start Time</label>
+                    {{ form.start_time }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">End Time</label>
+                    {{ form.end_time }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Mode</label>
+                    {{ form.mode }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Location / Online Link</label>
+                    {{ form.location_or_link }}
+                </div>
+            </div>
+
+            <div class="alert alert-info">
+                Covered hours will be calculated automatically from start time and end time.
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                Create Schedule Range
+            </button>
+
+            <a href="{% url 'schedule_list' %}" class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

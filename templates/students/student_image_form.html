@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Profile Picture{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">Update Profile Picture</h4>
+    </div>
+
+    <div class="card-body">
+
+        {% if student.student_image %}
+            <div class="mb-3">
+                <img src="{{ student.student_image.url }}"
+                     class="img-thumbnail"
+                     width="180">
+            </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button type="submit" class="btn btn-success">
+                Update Picture
+            </button>
+
+            <a href="{% url 'student_dashboard' %}" class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

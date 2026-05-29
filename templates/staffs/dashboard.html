@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %}Staff Dashboard{% endblock %}
 
 {% block content %}
@@ -54,10 +55,61 @@
         <div class="card summary-card shadow-sm bg-secondary text-white">
             <div class="card-body">
                 <h6>Total Amount</h6>
-                <h5>{{ total_payment_amount }}</h5>
+                <h5>{{ total_expected_amount | intcomma }}</h5>
             </div>
         </div>
     </div>
+
+    <!-- RECENT CLASS SCHEDULES -->
+<div class="card section-card mb-4">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Upcoming Class Schedules</h5>
+
+        <a href="{% url 'staff_class_schedule_list' %}" class="btn btn-sm btn-primary">
+            View All Schedules
+        </a>
+    </div>
+
+    <div class="card-body">
+        {% if upcoming_class_schedules %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Course</th>
+                        <th>Lecturer</th>
+                        <th>Title</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Mode</th>
+                        <th>Hours</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for schedule in upcoming_class_schedules %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ schedule.course.course_code }} - {{ schedule.course.course_name }}</td>
+                        <td>{{ schedule.lecturer.get_full_name|default:schedule.lecturer.username }}</td>
+                        <td>{{ schedule.title }}</td>
+                        <td>{{ schedule.class_date }}</td>
+                        <td>{{ schedule.start_time }} - {{ schedule.end_time }}</td>
+                        <td>{{ schedule.mode }}</td>
+                        <td>{{ schedule.covered_hours }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-info mb-0">
+                No upcoming class schedules for the next 3 days.
+            </div>
+        {% endif %}
+    </div>
+</div>
 </div>
 
 <div class="row g-3">
@@ -103,7 +155,7 @@
                 <ul class="list-group">
                     {% for payment in recent_payments %}
                         <li class="list-group-item">
-                            {{ payment.student.student_id }} - {{ payment.amount }} - {{ payment.status }}
+                            {{ payment.student.student_id }} - {{ payment.amount |intcomma }} - {{ payment.status }}
                         </li>
                     {% empty %}
                         <li class="list-group-item">No payments found.</li>
@@ -113,4 +165,343 @@
         </div>
     </div>
 </div>
+    <div class="row mt-4">
+
+  <!-- Overall Payment Summary -->
+  <div class="col-md-5">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">Overall Payment Summary</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="overallPaymentChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Course-wise Payment Summary -->
+<div class="col-md-7">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Course-wise Payment Summary</h5>
+
+      <select id="courseFilter" class="form-select form-select-sm" style="width: 250px;">
+        <option value="">Select Course</option>
+      </select>
+    </div>
+
+    <div class="card-body">
+      <canvas id="coursePaymentChart"></canvas>
+    </div>
+  </div>
+</div>
+
+</div>
+
+    <div class="row g-3 mt-3">
+
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h6 class="text-muted">Total Expected Amount</h6>
+        <h3>{{ total_expected_amount|floatformat:2|intcomma }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h6 class="text-muted">Total Paid Amount</h6>
+        <h3 class="text-success">{{ total_paid_amount|floatformat:2|intcomma }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h6 class="text-muted">Total Balance Amount</h6>
+        <h3 class="text-danger">{{ total_balance_amount|floatformat:2|intcomma }}</h3>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+    <div class="card shadow-sm border-0 mt-4">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Outstanding Balance Students</h5>
+  </div>
+
+  <div class="card-body">
+    {% if outstanding_balances %}
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+          <thead class="table-light">
+            <th>#</th>
+            <th>Student ID</th>
+            <th>Student Name</th>
+            <th>Course</th>
+            <th>Installment</th>
+            <th>Due Date</th>
+            <th>Due Now</th>
+            <th>Total Paid</th>
+            <th>Remaining Balance</th>
+          </thead>
+
+          <tbody>
+            {% for item in outstanding_balances %}
+                <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ item.student_id }}</td>
+              <td>{{ item.student_name }}</td>
+              <td>{{ item.course_code }} - {{ item.course_name }}</td>
+              <td>{{ item.installment_no }} / {{ item.total_installments }}</td>
+              <td>{{ item.next_due_date }}</td>
+              <td class="text-danger fw-bold">
+                {{ item.amount_due_now|floatformat:2|intcomma }}
+              </td>
+              <td class="text-success">
+                {{ item.paid_amount|floatformat:2|intcomma }}
+              </td>
+              <td class="text-danger">
+                {{ item.balance|floatformat:2|intcomma }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="alert alert-success mb-0">
+        No outstanding balances. All enrolled students are fully paid.
+      </div>
+    {% endif %}
+  </div>
+
+    <!-- CLASS SCHEDULE SUMMARY -->
+<div class="card section-card mb-4">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Class Schedule Summary</h5>
+        <span class="badge bg-info text-dark">Course Hours Monitoring</span>
+    </div>
+
+    <div class="card-body">
+        {% if class_schedule_summary %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Course</th>
+                        <th>Assigned Lecturers</th>
+                        <th>Total Hours</th>
+                        <th>Covered Hours</th>
+                        <th>Remaining Hours</th>
+                        <th>Progress</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in class_schedule_summary %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+
+                        <td>
+                            <strong>{{ item.course.course_code }}</strong><br>
+                            <small class="text-muted">{{ item.course.course_name }}</small>
+                        </td>
+
+                        <td>
+                            {% for lecturer in item.course.lecturers.all %}
+                                <span class="badge bg-primary">
+                                    {{ lecturer.user.get_full_name|default:lecturer.user.username }}
+                                </span>
+                            {% empty %}
+                                <span class="badge bg-secondary">Not Assigned</span>
+                            {% endfor %}
+                        </td>
+
+                        <td>{{ item.total_hours }}</td>
+                        <td class="text-success fw-bold">{{ item.covered_hours }}</td>
+                        <td class="text-danger fw-bold">{{ item.remaining_hours }}</td>
+
+                        <td>
+                            {% if item.total_hours > 0 %}
+                                <div class="progress" style="height: 18px;">
+                                    <div class="progress-bar bg-success"
+                                         role="progressbar"
+                                         style="width: {% widthratio item.covered_hours item.total_hours 100 %}%;">
+                                        {% widthratio item.covered_hours item.total_hours 100 %}%
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="badge bg-secondary">No Hours Set</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-info mb-0">
+                No class schedule data available.
+            </div>
+        {% endif %}
+    </div>
+</div>
+</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const overallData = {{ overall_chart_json|safe }};
+  const courseData = {{ course_chart_json|safe }};
+  const courseDropdown = {{ course_dropdown_json|safe }};
+
+  function money(value) {
+    return Number(value || 0).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  // Overall Payment Summary Chart
+  new Chart(document.getElementById('overallPaymentChart'), {
+    type: 'bar',
+    data: {
+      labels: overallData.labels,
+      datasets: [{
+    label: 'Amount',
+    data: overallData.data,
+    backgroundColor: [
+        'rgba(54, 162, 235, 0.8)',   // Expected - Blue
+        'rgba(75, 192, 192, 0.8)',   // Paid - Green
+        'rgba(255, 99, 132, 0.8)'    // Balance - Red
+    ],
+    borderColor: [
+        'rgba(54, 162, 235, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(255, 99, 132, 1)'
+    ],
+    borderWidth: 2
+}]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: 'Overall Expected vs Paid vs Balance'
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return 'Amount: ' + money(context.raw);
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return money(value);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Course-wise Payment Summary Chart
+  const courseFilter = document.getElementById('courseFilter');
+
+  courseDropdown.forEach(course => {
+    const option = document.createElement('option');
+    option.value = course.id;
+    option.textContent = course.name;
+    courseFilter.appendChild(option);
+  });
+
+  let courseChart = new Chart(document.getElementById('coursePaymentChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Expected', 'Paid', 'Balance'],
+     datasets: [{
+    label: 'Amount',
+    data: [0, 0, 0],
+
+    backgroundColor: [
+        'rgba(54, 162, 235, 0.8)',   // Expected - Blue
+        'rgba(75, 192, 192, 0.8)',   // Paid - Green
+        'rgba(255, 99, 132, 0.8)'    // Balance - Red
+    ],
+
+    borderColor: [
+        'rgba(54, 162, 235, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(255, 99, 132, 1)'
+    ],
+
+    borderWidth: 2
+}]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: 'Select a course to view payment summary'
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return 'Amount: ' + money(context.raw);
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return money(value);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  courseFilter.addEventListener('change', function () {
+    const selectedCourseId = Number(this.value);
+    const selectedCourse = courseData.find(item => item.course_id === selectedCourseId);
+
+    if (!selectedCourse) {
+      courseChart.data.datasets[0].data = [0, 0, 0];
+      courseChart.options.plugins.title.text = 'Select a course to view payment summary';
+    } else {
+      courseChart.data.datasets[0].data = [
+        selectedCourse.expected,
+        selectedCourse.paid,
+        selectedCourse.balance
+      ];
+
+      courseChart.options.plugins.title.text =
+        selectedCourse.course_name + ' - Payment Summary';
+    }
+
+    courseChart.update();
+  });
+</script>
 {% endblock %}
+
+
+

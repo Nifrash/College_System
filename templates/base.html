@@ -4,153 +4,218 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Europe Campus Management System{% endblock %}</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
-
-        .form-control, .form-select {
-    border-radius: 8px;
-}
-
-.card {
-    border-radius: 12px;
-}
-
-.card-header {
-    border-bottom: 1px solid #eee;
-}
         body {
-            background-color: #f8f9fa;
+            background: #f4f7fb;
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: #0f172a;
         }
 
         .sidebar {
             min-height: 100vh;
-            background: #212529;
-            padding-top: 20px;
-        }
-
-        .sidebar .nav-link {
-            color: #ffffff;
-            margin-bottom: 6px;
-            border-radius: 6px;
-        }
-
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background-color: #0d6efd;
-            color: #fff;
+            background: linear-gradient(180deg, #0f172a, #1e293b);
+            padding: 22px 14px;
         }
 
         .brand-title {
             color: #fff;
-            font-weight: bold;
-            font-size: 20px;
-            padding: 0 1rem 1rem 1rem;
-            display: block;
+            font-size: 21px;
+            font-weight: 800;
             text-decoration: none;
+            display: block;
+            padding: 0 12px 20px;
+            letter-spacing: .3px;
+        }
+
+        .sidebar .nav-link {
+            color: #cbd5e1;
+            padding: 11px 14px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+        }
+
+        .topbar {
+            background: #ffffff;
+            border-radius: 16px;
+            margin: 18px 18px 0;
+            padding: 14px 20px;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.07);
+        }
+
+        .public-navbar {
+            background: linear-gradient(135deg, #0f172a, #1e3a8a);
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.2);
         }
 
         .content-wrapper {
-            padding: 20px;
+            padding: 22px;
         }
 
-        .summary-card {
-            border: none;
+        .page-container {
+            max-width: 1320px;
+        }
+
+        .card {
+            border: 0;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        }
+
+        .card-header {
+            border-bottom: 1px solid #eef2f7;
+            border-radius: 16px 16px 0 0 !important;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .btn {
+            border-radius: 10px;
+        }
+
+        .alert {
             border-radius: 12px;
         }
 
-        .table-card {
-            border: none;
-            border-radius: 12px;
+        .role-badge {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+            }
+
+            .topbar {
+                margin: 12px;
+            }
+
+            .content-wrapper {
+                padding: 14px;
+            }
         }
     </style>
 </head>
+
 <body>
-    {% if user.is_authenticated and user.role == 'STAFF' %}
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-2 sidebar">
-                    <a href="{% url 'staff_dashboard' %}" class="brand-title">College CMS</a>
 
-                    <nav class="nav flex-column px-2">
-                        <a class="nav-link" href="{% url 'staff_dashboard' %}">Dashboard</a>
+{% if user.is_authenticated and user.role == 'STAFF' %}
 
-                        <a class="nav-link" href="{% url 'register_student' %}">Register Student</a>
-                        <a class="nav-link" href="{% url 'student_list' %}">Students</a>
+<div class="container-fluid">
+    <div class="row">
 
-                        <a class="nav-link" href="{% url 'register_lecturer' %}">Register Lecturer</a>
-                        <a class="nav-link" href="{% url 'lecturer_list' %}">Lecturers</a>
+        <!-- STAFF SIDEBAR -->
+        <div class="col-md-2 sidebar">
+            <a href="{% url 'staff_dashboard' %}" class="brand-title">
+                🎓 College CMS
+            </a>
 
-                        <a class="nav-link" href="{% url 'register_course' %}">Register Course</a>
-                        <a class="nav-link" href="{% url 'course_list' %}">Courses</a>
+            <nav class="nav flex-column">
+                <a class="nav-link" href="{% url 'staff_dashboard' %}">📊 Dashboard</a>
+                <a class="nav-link" href="{% url 'register_student' %}">👨‍🎓 Register Student</a>
+                <a class="nav-link" href="{% url 'student_list' %}">👥 Students</a>
+                <a class="nav-link" href="{% url 'register_lecturer' %}">👨‍🏫 Register Lecturer</a>
+                <a class="nav-link" href="{% url 'lecturer_list' %}">🧑‍🏫 Lecturers</a>
+                <a class="nav-link" href="{% url 'register_course' %}">📚 Register Course</a>
+                <a class="nav-link" href="{% url 'course_list' %}">📖 Courses</a>
+                <a class="nav-link" href="{% url 'enroll_student' %}">📝 Enroll Student</a>
+                <a class="nav-link" href="{% url 'enrollment_list' %}">📋 Enrollments</a>
+                <a class="nav-link" href="{% url 'payment_list' %}">💳 Payments</a>
+            </nav>
+        </div>
 
-                        <a class="nav-link" href="{% url 'enroll_student' %}">Enroll Student</a>
-                        <a class="nav-link" href="{% url 'enrollment_list' %}">Enrollments</a>
+        <div class="col-md-10 px-0">
 
-                        <a class="nav-link" href="{% url 'payment_list' %}">Payments</a>
-                    </nav>
-                </div>
+{% else %}
 
-                <div class="col-md-10">
-                    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-3">
-                        <div class="container-fluid">
-                            <span class="navbar-text">
-                                Welcome, {{ user.username }} ({{ user.role }})
-                            </span>
-                            <form method="post" action="{% url 'logout' %}" class="m-0">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger btn-sm">Logout</button>
-                            </form>
-                        </div>
-                    </nav>
+<div>
+    <nav class="navbar navbar-expand-lg navbar-dark public-navbar">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                🎓 Europe Campus Management
+            </a>
 
-                    <div class="content-wrapper">
-                        {% if messages %}
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-
-                        {% block content %}
-                        {% endblock %}
-                    </div>
-                </div>
+            <div class="ms-auto d-flex align-items-center">
+                {% if user.is_authenticated %}
+                    <span class="text-white me-3">
+                        {{ user.username }} ({{ user.role }})
+                    </span>
+                    <form method="post" action="{% url 'logout' %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Logout</button>
+                    </form>
+                {% endif %}
             </div>
         </div>
-    {% else %}
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container">
-                <a class="navbar-brand" href="#">Europe Campus Management</a>
-                <div class="ms-auto d-flex align-items-center">
-                    {% if user.is_authenticated %}
-                        <span class="text-white me-3">
-                            Welcome, {{ user.username }} ({{ user.role }})
-                        </span>
-                        <form method="post" action="{% url 'logout' %}" class="m-0">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm">Logout</button>
-                        </form>
-                    {% endif %}
-                </div>
+    </nav>
+
+{% endif %}
+
+<!-- TOPBAR FOR STAFF ONLY -->
+{% if user.is_authenticated and user.role == 'STAFF' %}
+<nav class="topbar d-flex justify-content-between align-items-center">
+    <div>
+        <h5 class="mb-0">Europe Campus Management System</h5>
+        <small class="text-muted">Staff Control Panel</small>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <span class="role-badge">{{ user.role }}</span>
+        <span class="fw-semibold">{{ user.username }}</span>
+
+        <form method="post" action="{% url 'logout' %}" class="m-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+                Logout
+            </button>
+        </form>
+    </div>
+</nav>
+{% endif %}
+
+<!-- MAIN CONTENT -->
+<div class="{% if user.is_authenticated and user.role == 'STAFF' %}content-wrapper{% else %}container page-container mt-4{% endif %}">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-        </nav>
-
-        <div class="container mt-4">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-
-{#            {% block content %}{% endblock %}#}
-        </div>
+        {% endfor %}
     {% endif %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block content %}
+    {% endblock %}
+
+</div>
+
+{% if user.is_authenticated and user.role == 'STAFF' %}
+        </div>
+    </div>
+</div>
+{% else %}
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

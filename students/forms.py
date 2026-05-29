@@ -1,5 +1,6 @@
 from django import forms
 from .models import Student
+from django import forms
 
 
 class StudentForm(forms.ModelForm):
@@ -26,5 +27,17 @@ class StudentForm(forms.ModelForm):
             'address': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3
+            }),
+        }
+
+
+class StudentImageUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Student
+        fields = ['student_image']
+
+        widgets = {
+            'student_image': forms.ClearableFileInput(attrs={
+                'class': 'form-control'
             }),
         }

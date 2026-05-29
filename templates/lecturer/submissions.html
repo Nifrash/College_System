@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Assignment Submissions{% endblock %}
+
+{% block content %}
+<h3 class="mb-3">Submissions - {{ assignment.title }}</h3>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <p><strong>Course:</strong> {{ assignment.course.course_code }} - {{ assignment.course.course_name }}</p>
+        <p><strong>Deadline:</strong> {{ assignment.deadline }}</p>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if submissions %}
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>Submitted At</th>
+                    <th>File</th>
+                    <th>Marks</th>
+                    <th>Feedback</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for submission in submissions %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ submission.student.get_full_name|default:submission.student.username }}</td>
+                    <td>{{ submission.submitted_at }}</td>
+                    <td>
+                        <a href="{{ submission.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            Download
+                        </a>
+                    </td>
+                    <td>
+                        {% if submission.marks %}
+                            <span class="badge bg-success">{{ submission.marks }}</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Not Marked</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ submission.feedback|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'mark_submission' submission.id %}" class="btn btn-sm btn-success">
+                            Mark
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <div class="alert alert-info">No submissions received yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

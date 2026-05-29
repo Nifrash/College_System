@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Student
-from .forms import StudentForm
+from .forms import StudentForm, StudentImageUpdateForm
 
 
 def is_student(user):
@@ -38,25 +38,29 @@ def student_detail(request):
         'students': student
     })
 
-
 @login_required
 @user_passes_test(is_student)
 def student_update(request):
     student = get_object_or_404(Student, user=request.user)
 
     if request.method == 'POST':
-        form = StudentForm(request.POST, request.FILES, instance=student)
+        form = StudentImageUpdateForm(
+            request.POST,
+            request.FILES,
+            instance=student
+        )
+
         if form.is_valid():
             form.save()
             return redirect('student_dashboard')
     else:
-        form = StudentForm(instance=student)
+        form = StudentImageUpdateForm(instance=student)
 
-    return render(request, 'students/student_form.html', {
+    return render(request, 'students/student_image_form.html', {
         'form': form,
-        'title': 'Update Student Profile'
+        'student': student,
+        'title': 'Update Profile Picture'
     })
-
 
 @login_required
 @user_passes_test(is_student)

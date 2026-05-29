@@ -2,16 +2,109 @@
 {% block title %}Enroll Student{% endblock %}
 
 {% block content %}
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+            {{ error }}
+        {% endfor %}
+    </div>
+{% endif %}
 <div class="card shadow-sm">
-    <div class="card-header bg-white">
-        <h4 class="mb-0">Enroll Student in Course</h4>
-    </div>
-    <div class="card-body">
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-secondary">Enroll Student</button>
-        </form>
-    </div>
+  <div class="card-header bg-white">
+    <h4 class="mb-0">Enroll Student in Course</h4>
+  </div>
+
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Student</label>
+          {{ form.student }}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Course</label>
+          {{ form.course }}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Mode of Study</label>
+          {{ form.mode_of_study }}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Course Fee</label>
+          {{ form.original_course_fee }}
+          <small class="text-muted">{{ form.original_course_fee.help_text }}</small>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Discount Amount</label>
+          {{ form.discount_amount }}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Payment Method</label>
+          {{ form.preferred_payment_method }}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Number of Installments</label>
+          {{ form.number_of_installments }}
+        </div>
+      </div>
+
+      <button class="btn btn-success">Enroll Student</button>
+      <a href="{% url 'enrollment_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
 </div>
+
+<script>
+  const courseFees = {{ course_fees_json|safe }};
+
+  const courseSelect = document.getElementById("id_course");
+  const feeInput = document.getElementById("id_original_course_fee");
+
+  function updateCourseFee() {
+    const selectedCourseId = courseSelect.value;
+
+    if (selectedCourseId && courseFees[selectedCourseId]) {
+      feeInput.value = courseFees[selectedCourseId];
+    } else {
+      feeInput.value = "";
+    }
+  }
+
+  courseSelect.addEventListener("change", updateCourseFee);
+
+  // Auto-fill if course is already selected
+  updateCourseFee();
+
+
+</script>
+    <script>
+    const courseFees = {{ course_fees_json|safe }};
+
+    const courseSelect = document.getElementById("id_course");
+    const feeInput = document.getElementById("id_original_course_fee");
+
+    function updateCourseFee() {
+        const selectedCourseId = courseSelect.value;
+
+        if (selectedCourseId && courseFees[selectedCourseId]) {
+            feeInput.value = courseFees[selectedCourseId];
+        } else {
+            feeInput.value = "";
+        }
+    }
+
+    courseSelect.addEventListener("change", updateCourseFee);
+
+    updateCourseFee();
+</script>
+
 {% endblock %}

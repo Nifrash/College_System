@@ -20,4 +20,8 @@ urlpatterns = [
     path('payments/', views.payment_list, name='payment_list'),
     path('payments/add/', views.add_payment, name='add_payment'),
     path('payments/<int:pk>/edit/', views.edit_payment, name='edit_payment'),
+
+    path('payments/export-excel/', views.export_payments_excel, name='export_payments_excel'),
+
+    path(  'class-schedules/',   views.staff_class_schedule_list,   name='staff_class_schedule_list'),
 ]

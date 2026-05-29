@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Mark Submission{% endblock %}
+
+{% block content %}
+      <div class="mb-3">
+    <a href="{% url 'lecturer_dashboard' %}" class="btn btn-secondary">
+        ← Back to Dashboard
+    </a>
+</div>
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">Mark Assignment Submission</h4>
+    </div>
+
+    <div class="card-body">
+        <p><strong>Student:</strong> {{ submission.student.get_full_name|default:submission.student.username }}</p>
+        <p><strong>Assignment:</strong> {{ submission.assignment.title }}</p>
+        <p>
+            <strong>Submitted File:</strong>
+            <a href="{{ submission.file.url }}" target="_blank">Download Submission</a>
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button class="btn btn-success">Save Marks</button>
+            <a href="{% url 'assignment_submissions' submission.assignment.id %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

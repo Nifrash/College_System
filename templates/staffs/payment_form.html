@@ -3,33 +3,127 @@
 
 {% block content %}
 <div class="card shadow-sm">
-    <div class="card-header bg-white">
-        <h4 class="mb-0">{{ title }}</h4>
-    </div>
-    <div class="card-body">
-        <form method="post">
-            {% csrf_token %}
+  <div class="card-header bg-white">
+    <h4 class="mb-0">{{ title }}</h4>
+  </div>
 
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
             {% if form.non_field_errors %}
-                <div class="alert alert-danger">
-                    {% for error in form.non_field_errors %}
-                        <div>{{ error }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
-            {% for field in form %}
-                <div class="mb-3">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% for error in field.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                    {% endfor %}
-                </div>
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
             {% endfor %}
+        </div>
+        {% endif %}
 
-            <button type="submit" class="btn btn-primary">Save Payment</button>
-        </form>
-    </div>
+     <div class="row">
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Enrolled Student</label>
+          {{ form.student }}
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Enrolled Course</label>
+          {{ form.course }}
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Course Fee</label>
+            <input type="text" id="course_fee" class="form-control" readonly>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Already Paid</label>
+            <input type="text" id="paid_amount" class="form-control" readonly>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Remaining Balance</label>
+            <input type="text" id="remaining_balance" class="form-control" readonly>
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Amount Paying Now</label>
+          {{ form.amount }}
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Payment Method</label>
+          {{ form.payment_method }}
+        </div>
+
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Status</label>
+          {{ form.status }}
+        </div>
+
+      </div>
+
+      <button type="submit" class="btn btn-success">Save Payment</button>
+      <a href="{% url 'payment_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
 </div>
+
+<script>
+  const enrollmentData = {{ enrollment_data_json|safe }};
+
+  const studentSelect = document.getElementById("id_student");
+  const courseSelect = document.getElementById("id_course");
+
+  const courseFeeInput = document.getElementById("course_fee");
+  const paidAmountInput = document.getElementById("paid_amount");
+  const remainingBalanceInput = document.getElementById("remaining_balance");
+  const amountInput = document.getElementById("id_amount");
+
+  function resetCourseDetails() {
+    courseFeeInput.value = "";
+    paidAmountInput.value = "";
+    remainingBalanceInput.value = "";
+    amountInput.value = "";
+  }
+
+  function loadCoursesForStudent() {
+    const studentId = studentSelect.value;
+    const courses = enrollmentData[studentId] || [];
+
+    courseSelect.innerHTML = '<option value="">---------</option>';
+
+    courses.forEach(item => {
+      const option = document.createElement("option");
+      option.value = item.course_id;
+      option.textContent = `${item.course_code} - ${item.course_name}`;
+      option.dataset.fee = item.course_fee;
+      option.dataset.paid = item.paid_amount;
+      option.dataset.remaining = item.remaining_balance;
+      courseSelect.appendChild(option);
+    });
+
+    resetCourseDetails();
+  }
+
+  function updateCourseAmount() {
+    const selected = courseSelect.options[courseSelect.selectedIndex];
+
+    if (!selected || !selected.value) {
+      resetCourseDetails();
+      return;
+    }
+
+    courseFeeInput.value = selected.dataset.fee;
+    paidAmountInput.value = selected.dataset.paid;
+    remainingBalanceInput.value = selected.dataset.remaining;
+
+    // Auto-fill amount with remaining balance
+    amountInput.value = selected.dataset.remaining;
+  }
+
+  studentSelect.addEventListener("change", loadCoursesForStudent);
+  courseSelect.addEventListener("change", updateCourseAmount);
+
+  loadCoursesForStudent();
+</script>
 {% endblock %}

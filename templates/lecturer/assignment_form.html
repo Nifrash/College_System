@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Assignment{% endblock %}
+
+{% block content %}
+
+      <div class="mb-3">
+    <a href="{% url 'lecturer_dashboard' %}" class="btn btn-secondary">
+        ← Back to Dashboard
+    </a>
+</div>
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">Assignment</h4>
+    </div>
+
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button class="btn btn-success">Save Assignment</button>
+            <a href="{% url 'assignment_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

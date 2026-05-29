@@ -14,6 +14,8 @@
                     <th>Course Code</th>
                     <th>Course Name</th>
                     <th>Credits</th>
+                    <th>Semester</th>
+                    <th>Total Hours</th>
                     <th>Assigned Lecturer</th>
                     <th>Action</th>
                 </tr>
@@ -24,12 +26,18 @@
                     <td>{{ course.course_code }}</td>
                     <td>{{ course.course_name }}</td>
                     <td>{{ course.credits }}</td>
+                    <td>{{ course.get_semester_display }}</td>
+                    <td>{{ course.total_hours }}</td>
                     <td>
-                        {% if course.lecturer %}
-                            {{ course.lecturer.user.get_full_name|default:course.lecturer.user.username }}
-                        {% else %}
+                    {% for lecturer in course.lecturers.all %}
+                        <span class="badge bg-primary">
+                            {{ lecturer.user.get_full_name|default:lecturer.user.username }}
+                        </span>
+                    {% empty %}
+                        <span class="badge bg-secondary">
                             Not Assigned
-                        {% endif %}
+                        </span>
+                    {% endfor %}
                     </td>
                     <td>
                         <a href="{% url 'assign_course' course.id %}" class="btn btn-sm btn-info">Assign Lecturer</a>

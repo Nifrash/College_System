@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Student Dashboard{% endblock %}
 
@@ -29,9 +30,9 @@
         <p><strong>DOB:</strong> {{ student.date_of_birth|default:"-" }}</p>
         <p><strong>Address:</strong> {{ student.address|default:"-" }}</p>
 
-        <a href="{% url 'student_update' %}" class="btn btn-warning btn-sm">
-          Edit Profile
-        </a>
+       <a href="{% url 'student_update' %}" class="btn btn-warning btn-sm">
+    Update Profile Picture
+</a>
       </div>
     </div>
   </div>
@@ -62,7 +63,7 @@
               <td>{{ enrollment.course.course_name }}</td>
               <td>{{ enrollment.course.credits }}</td>
               <td>
-                {% if enrollment.course.lecturer %}
+                {% if enrollment.course.lecturers.all() %}
                   {{ enrollment.course.lecturer.user.get_full_name }}
                 {% else %}
                   Not Assigned
