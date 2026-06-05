@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Class Schedule{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+    <a href="{% url 'staff_class_schedule_list' %}" class="btn btn-secondary">
+        ← Back to Class Schedules
+    </a>
+
+<a href="{% url 'staff_create_class_schedule' %}" class="btn btn-primary">
+    + Create Class Schedule
+</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">{{ page_title }}</h4>
+    </div>
+
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button type="submit" class="btn btn-success">
+                Save Schedule
+            </button>
+
+            <a href="{% url 'staff_class_schedule_list' %}" class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

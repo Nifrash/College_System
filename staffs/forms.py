@@ -7,6 +7,8 @@ from payments.models import Payment
 from django.db.models import Sum
 from decimal import Decimal
 from lecturers.models import Lecturer
+from learning.models import ClassSchedule
+from accounts.models import User
 
 
 User = get_user_model()
@@ -230,3 +232,35 @@ class PaymentForm(BootstrapFormMixin, forms.ModelForm):
                     f"Payment exceeds course fee. "  f"Remaining balance is {remaining_balance:.2f}." )
 
         return cleaned_data
+
+class StaffClassScheduleForm(forms.ModelForm):
+    class Meta:
+        model = ClassSchedule
+        fields = [
+            'course',
+            'lecturer',
+            'title',
+            'class_date',
+            'start_time',
+            'end_time',
+            'mode',
+            'location_or_link',
+            'covered_hours',
+        ]
+
+        widgets = {
+            'course': forms.Select(attrs={'class': 'form-select'}),
+            'lecturer': forms.Select(attrs={'class': 'form-select'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'class_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'start_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'mode': forms.Select(attrs={'class': 'form-select'}),
+            'location_or_link': forms.TextInput(attrs={'class': 'form-control'}),
+            'covered_hours': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.5'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['lecturer'].queryset = User.objects.filter(role='LECTURER')

@@ -23,6 +23,10 @@ from django.db.models import Q
 from accounts.models import User
 from courses.models import Course
 from learning.models import ClassSchedule
+from learning.models import ClassSchedule
+from .forms import StaffClassScheduleForm
+from django.db.models import Sum
+from decimal import Decimal
 
 
 @login_required
@@ -800,4 +804,38 @@ def staff_class_schedule_list(request):
         'selected_course': course_id,
         'selected_lecturer': lecturer_id,
         'query': query,
+    })
+
+@login_required
+@role_required('STAFF')
+def staff_create_class_schedule(request):
+    if request.method == 'POST':
+        form = StaffClassScheduleForm(request.POST)
+
+        if form.is_valid():
+            schedule = form.save(commit=False)
+
+            existing_hours = ClassSchedule.objects.filter(
+                course=schedule.course
+            ).exclude(
+                pk=schedule.pk
+            ).aggregate(total=Sum('covered_hours'))['total'] or Decimal('0.00')
+
+            course_total_hours = Decimal(schedule.course.total_hours or 0)
+
+            if existing_hours + schedule.covered_hours > course_total_hours:
+                messages.error(
+                    request,
+                    'Cannot create schedule. Covered hours exceed total course hours.'
+                )
+            else:
+                schedule.save()
+                messages.success(request, 'Class schedule created successfully.')
+                return redirect('staff_class_schedule_list')
+    else:
+        form = StaffClassScheduleForm()
+
+    return render(request, 'staffs/class_schedule_form.html', {
+        'form': form,
+        'page_title': 'Create Class Schedule',
     })

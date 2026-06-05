@@ -24,4 +24,6 @@ urlpatterns = [
     path('payments/export-excel/', views.export_payments_excel, name='export_payments_excel'),
 
     path(  'class-schedules/',   views.staff_class_schedule_list,   name='staff_class_schedule_list'),
+
+    path('class-schedules/create/', views.staff_create_class_schedule,  name='staff_create_class_schedule'),
 ]
