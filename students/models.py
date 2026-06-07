@@ -58,6 +58,10 @@ class Student(models.Model):
 
     admission_date = models.DateField(auto_now_add=True)
 
+    is_suspended = models.BooleanField(default=False)
+    suspended_reason = models.TextField(blank=True, null=True)
+    suspended_at = models.DateTimeField(blank=True, null=True)
+
     def save(self, *args, **kwargs):
         if not self.student_id:
             super().save(*args, **kwargs)

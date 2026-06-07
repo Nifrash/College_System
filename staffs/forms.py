@@ -287,8 +287,9 @@ class StaffClassScheduleRangeForm(forms.Form):
     )
 
     lecturer = forms.ModelChoiceField(
-        queryset=User.objects.filter(role='LECTURER'),
-        widget=forms.Select(attrs={'class': 'form-select'})
+        queryset=User.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label='Lecturer'
     )
 
     title = forms.CharField(
@@ -326,3 +327,23 @@ class StaffClassScheduleRangeForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['course'].queryset = Course.objects.all()
+        self.fields['lecturer'].queryset = User.objects.filter(role='LECTURER')
+
+        if self.data.get('course'):
+            try:
+                course_id = int(self.data.get('course'))
+                course = Course.objects.get(id=course_id)
+
+                lecturer_user_ids = course.lecturers.values_list('user_id', flat=True)
+
+                self.fields['lecturer'].queryset = User.objects.filter(
+                    id__in=lecturer_user_ids,
+                    role='LECTURER'
+                )
+            except (ValueError, Course.DoesNotExist):
+                self.fields['lecturer'].queryset = User.objects.none()

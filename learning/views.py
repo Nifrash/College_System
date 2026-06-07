@@ -73,7 +73,6 @@ def upload_note(request):
 
     return render(request, 'lecturer/note_form.html', {'form': form})
 
-
 @login_required
 @user_passes_test(is_lecturer)
 def create_assignment(request):
@@ -95,7 +94,6 @@ def create_assignment(request):
 
     return render(request, 'lecturer/assignment_form.html', {'form': form})
 
-
 @login_required
 @user_passes_test(is_lecturer)
 def edit_assignment(request, pk):
@@ -116,14 +114,12 @@ def edit_assignment(request, pk):
 
     return render(request, 'lecturer/assignment_form.html', {'form': form})
 
-
 @login_required
 @user_passes_test(is_lecturer)
 def assignment_list(request):
     lecturer = get_object_or_404(Lecturer, user=request.user)
     assignments = Assignment.objects.filter(course__lecturers=lecturer).order_by('-uploaded_at')
     return render(request, 'lecturer/assignment_list.html', {'assignments': assignments})
-
 
 @login_required
 @user_passes_test(is_lecturer)
@@ -139,7 +135,6 @@ def assignment_submissions(request, pk):
         'assignment': assignment,
         'submissions': submissions,
     })
-
 
 @login_required
 @user_passes_test(is_lecturer)

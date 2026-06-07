@@ -1,4 +1,5 @@
 from django.contrib import messages
+from learning.utils import notify_course_students
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
@@ -16,12 +17,19 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
 from accounts.models import User
-from courses.models import Course
-from .forms import StaffClassScheduleForm
+from .forms import StaffClassScheduleForm, StaffClassScheduleRangeForm
 from datetime import datetime, timedelta
 from decimal import Decimal
 from django.db.models import Sum
 from learning.models import ClassSchedule
+from courses.models import Course
+from django.http import JsonResponse
+from courses.models import Course
+from django.utils import timezone
+from learning.models import ClassSchedule
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+from payments.utils import generate_payment_invoice
 
 
 @login_required
@@ -87,17 +95,234 @@ def generate_username(first_name, last_name):
         counter += 1
 
     return username
+# @login_required
+# @role_required('STAFF')
+# def staff_dashboard(request):
+#
+#     total_expected_amount = Decimal('0.00')
+#     total_paid_amount = Decimal('0.00')
+#
+#     course_summary = {}
+#
+#     enrollments = Enrollment.objects.select_related('course', 'student')
+#
+#     for enrollment in enrollments:
+#         course = enrollment.course
+#         final_fee = enrollment.final_course_fee or Decimal('0.00')
+#
+#         paid_amount = Payment.objects.filter(
+#             student__user=enrollment.student,
+#             course=course,
+#             status='PAID'
+#         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+#
+#         total_expected_amount += final_fee
+#         total_paid_amount += paid_amount
+#
+#         course_key = course.course_name
+#
+#         if course_key not in course_summary:
+#             course_summary[course_key] = {
+#                 'expected': Decimal('0.00'),
+#                 'paid': Decimal('0.00'),
+#                 'balance': Decimal('0.00'),
+#             }
+#
+#         course_summary[course_key]['expected'] += final_fee
+#         course_summary[course_key]['paid'] += paid_amount
+#
+#     total_balance_amount = total_expected_amount - total_paid_amount
+#
+#     for course_name, data in course_summary.items():
+#         data['balance'] = data['expected'] - data['paid']
+#
+#     course_chart_json = []
+#
+#     for course_name, data in course_summary.items():
+#         course_obj = Course.objects.filter(course_name=course_name).first()
+#
+#         course_chart_json.append({
+#             'course_id': course_obj.id if course_obj else None,
+#             'course_name': course_name,
+#             'expected': float(data['expected']),
+#             'paid': float(data['paid']),
+#             'balance': float(data['balance']),
+#         })
+#
+#         today = timezone.now().date()
+#         reminder_days = 7
+#
+#         today_date = timezone.now().date()
+#         reminder_days = 7
+#
+#         outstanding_balances = []
+#
+#         for enrollment in enrollments:
+#             student_user = enrollment.student
+#             course = enrollment.course
+#
+#             try:
+#                 student_profile = student_user.student_profile
+#             except Student.DoesNotExist:
+#                 continue
+#
+#             final_fee = enrollment.final_course_fee or Decimal('0.00')
+#             installments = enrollment.number_of_installments or 1
+#
+#             if installments <= 0 or final_fee <= 0:
+#                 continue
+#
+#             installment_amount = final_fee / installments
+#
+#             paid_amount = Payment.objects.filter(
+#                 student=student_profile,
+#                 course=course,
+#                 status='PAID'
+#             ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+#
+#             remaining_balance = final_fee - paid_amount
+#
+#             if remaining_balance <= 0:
+#                 continue
+#
+#             completed_installments = int(paid_amount // installment_amount)
+#
+#             if completed_installments >= installments:
+#                 continue
+#
+#             next_installment_no = completed_installments + 1
+#
+#             amount_paid_towards_next = paid_amount - (
+#                     completed_installments * installment_amount
+#             )
+#
+#             amount_due_now = installment_amount - amount_paid_towards_next
+#
+#             if amount_due_now > remaining_balance:
+#                 amount_due_now = remaining_balance
+#
+#             next_due_date = enrollment.enrolled_date + relativedelta(
+#                 months=(next_installment_no - 1) * 2
+#             )
+#
+#             show_from_date = next_due_date - timedelta(days=reminder_days)
+#
+#             if today_date < show_from_date:
+#                 continue
+#
+#             outstanding_balances.append({
+#                 'student_id': student_profile.student_id,
+#                 'student_name': student_user.get_full_name() or student_user.username,
+#                 'course_code': course.course_code,
+#                 'course_name': course.course_name,
+#                 'final_fee': final_fee,
+#                 'paid_amount': paid_amount,
+#                 'balance': remaining_balance,
+#                 'installment_no': next_installment_no,
+#                 'total_installments': installments,
+#                 'installment_amount': installment_amount,
+#                 'amount_due_now': amount_due_now,
+#                 'next_due_date': next_due_date,
+#                 'show_from_date': show_from_date,
+#             })
+#
+#             outstanding_balances.append({
+#                 'student_id': student_profile.student_id,
+#                 'student_name': student_user.get_full_name() or student_user.username,
+#                 'course_code': course.course_code,
+#                 'course_name': course.course_name,
+#                 'final_fee': final_fee,
+#                 'paid_amount': paid_amount,
+#                 'balance': remaining_balance,
+#                 'installment_no': next_installment_no,
+#                 'total_installments': installments,
+#                 'installment_amount': installment_amount,
+#                 'amount_due_now': amount_due_now,
+#                 'next_due_date': next_due_date,
+#                 'show_from_date': show_from_date,
+#             })
+#
+#             class_schedule_summary = []
+#
+#             courses_for_schedule = Course.objects.prefetch_related('lecturers__user')
+#
+#             for course in courses_for_schedule:
+#                 covered_hours = ClassSchedule.objects.filter(
+#                     course=course
+#                 ).aggregate(total=Sum('covered_hours'))['total'] or Decimal('0.00')
+#
+#                 total_hours = Decimal(course.total_hours or 0)
+#                 remaining_hours = total_hours - covered_hours
+#
+#                 if remaining_hours < 0:
+#                     remaining_hours = Decimal('0.00')
+#
+#                 class_schedule_summary.append({
+#                     'course': course,
+#                     'total_hours': total_hours,
+#                     'covered_hours': covered_hours,
+#                     'remaining_hours': remaining_hours,
+#                 })
+#
+#             today = timezone.now().date()
+#             next_3_days = today + timedelta(days=3)
+#
+#             upcoming_class_schedules = ClassSchedule.objects.select_related('course',  'lecturer'  ).filter(
+#                 class_date__gte=today,
+#                 class_date__lte=next_3_days ).order_by('class_date', 'start_time')
+#
+#     context = {
+#
+#         'class_schedule_summary': class_schedule_summary,
+#         'upcoming_class_schedules': upcoming_class_schedules,
+#         'total_students': Student.objects.count(),
+#         'total_lecturers': Lecturer.objects.count(),
+#         'total_courses': Course.objects.count(),
+#         'total_enrollments': Enrollment.objects.count(),
+#         'total_payments': Payment.objects.count(),
+#
+#         'total_expected_amount': total_expected_amount,
+#         'total_paid_amount': total_paid_amount,
+#         'total_balance_amount': total_balance_amount,
+#
+#         'recent_students': Student.objects.select_related('user').order_by('-id')[:5],
+#         'recent_payments': Payment.objects.select_related('student', 'student__user', 'course').order_by('-id')[:5],
+#
+#         'outstanding_balances': outstanding_balances,
+#
+#         'overall_chart_json': json.dumps({
+#             'labels': ['Expected Amount', 'Paid Amount', 'Balance Amount'],
+#             'data': [
+#                 float(total_expected_amount),
+#                 float(total_paid_amount),
+#                 float(total_balance_amount),
+#             ]
+#         }, cls=DjangoJSONEncoder),
+#
+#         'course_chart_json': json.dumps(course_chart_json, cls=DjangoJSONEncoder),
+#
+#         'course_dropdown_json': json.dumps([
+#             {
+#                 'id': course.id,
+#                 'name': course.course_name,
+#             }
+#             for course in Course.objects.all()
+#         ], cls=DjangoJSONEncoder),
+#     }
+#
+#     return render(request, 'staffs/dashboard.html', context)
+
 @login_required
 @role_required('STAFF')
 def staff_dashboard(request):
 
     total_expected_amount = Decimal('0.00')
     total_paid_amount = Decimal('0.00')
-
     course_summary = {}
 
     enrollments = Enrollment.objects.select_related('course', 'student')
 
+    # ---------------- FINANCE SUMMARY ----------------
     for enrollment in enrollments:
         course = enrollment.course
         final_fee = enrollment.final_course_fee or Decimal('0.00')
@@ -141,132 +366,120 @@ def staff_dashboard(request):
             'balance': float(data['balance']),
         })
 
-        today = timezone.now().date()
-        reminder_days = 7
+    # ---------------- OUTSTANDING BALANCES ----------------
+    today_date = timezone.now().date()
+    reminder_days = 7
+    outstanding_balances = []
 
-        today_date = timezone.now().date()
-        reminder_days = 7
+    for enrollment in enrollments:
+        student_user = enrollment.student
+        course = enrollment.course
 
-        outstanding_balances = []
+        try:
+            student_profile = student_user.student_profile
+        except Student.DoesNotExist:
+            continue
 
-        for enrollment in enrollments:
-            student_user = enrollment.student
-            course = enrollment.course
+        final_fee = enrollment.final_course_fee or Decimal('0.00')
+        installments = enrollment.number_of_installments or 1
 
-            try:
-                student_profile = student_user.student_profile
-            except Student.DoesNotExist:
-                continue
+        if installments <= 0 or final_fee <= 0:
+            continue
 
-            final_fee = enrollment.final_course_fee or Decimal('0.00')
-            installments = enrollment.number_of_installments or 1
+        installment_amount = final_fee / installments
 
-            if installments <= 0 or final_fee <= 0:
-                continue
+        paid_amount = Payment.objects.filter(
+            student=student_profile,
+            course=course,
+            status='PAID'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
 
-            installment_amount = final_fee / installments
+        remaining_balance = final_fee - paid_amount
 
-            paid_amount = Payment.objects.filter(
-                student=student_profile,
-                course=course,
-                status='PAID'
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        if remaining_balance <= 0:
+            continue
 
-            remaining_balance = final_fee - paid_amount
+        completed_installments = int(paid_amount // installment_amount)
 
-            if remaining_balance <= 0:
-                continue
+        if completed_installments >= installments:
+            continue
 
-            completed_installments = int(paid_amount // installment_amount)
+        next_installment_no = completed_installments + 1
 
-            if completed_installments >= installments:
-                continue
+        amount_paid_towards_next = paid_amount - (
+            completed_installments * installment_amount
+        )
 
-            next_installment_no = completed_installments + 1
+        amount_due_now = installment_amount - amount_paid_towards_next
 
-            amount_paid_towards_next = paid_amount - (
-                    completed_installments * installment_amount
-            )
+        if amount_due_now > remaining_balance:
+            amount_due_now = remaining_balance
 
-            amount_due_now = installment_amount - amount_paid_towards_next
+        next_due_date = enrollment.enrolled_date + relativedelta(
+            months=(next_installment_no - 1) * 2
+        )
 
-            if amount_due_now > remaining_balance:
-                amount_due_now = remaining_balance
+        show_from_date = next_due_date - timedelta(days=reminder_days)
 
-            next_due_date = enrollment.enrolled_date + relativedelta(
-                months=(next_installment_no - 1) * 2
-            )
+        if today_date < show_from_date:
+            continue
 
-            show_from_date = next_due_date - timedelta(days=reminder_days)
+        outstanding_balances.append({
+            'student_id': student_profile.student_id,
+            'student_name': student_user.get_full_name() or student_user.username,
+            'course_code': course.course_code,
+            'course_name': course.course_name,
+            'final_fee': final_fee,
+            'paid_amount': paid_amount,
+            'balance': remaining_balance,
+            'installment_no': next_installment_no,
+            'total_installments': installments,
+            'installment_amount': installment_amount,
+            'amount_due_now': amount_due_now,
+            'next_due_date': next_due_date,
+            'show_from_date': show_from_date,
+        })
 
-            if today_date < show_from_date:
-                continue
+    # ---------------- CLASS SCHEDULE SUMMARY ----------------
+    class_schedule_summary = []
 
-            outstanding_balances.append({
-                'student_id': student_profile.student_id,
-                'student_name': student_user.get_full_name() or student_user.username,
-                'course_code': course.course_code,
-                'course_name': course.course_name,
-                'final_fee': final_fee,
-                'paid_amount': paid_amount,
-                'balance': remaining_balance,
-                'installment_no': next_installment_no,
-                'total_installments': installments,
-                'installment_amount': installment_amount,
-                'amount_due_now': amount_due_now,
-                'next_due_date': next_due_date,
-                'show_from_date': show_from_date,
-            })
+    courses_for_schedule = Course.objects.prefetch_related('lecturers__user')
 
-            outstanding_balances.append({
-                'student_id': student_profile.student_id,
-                'student_name': student_user.get_full_name() or student_user.username,
-                'course_code': course.course_code,
-                'course_name': course.course_name,
-                'final_fee': final_fee,
-                'paid_amount': paid_amount,
-                'balance': remaining_balance,
-                'installment_no': next_installment_no,
-                'total_installments': installments,
-                'installment_amount': installment_amount,
-                'amount_due_now': amount_due_now,
-                'next_due_date': next_due_date,
-                'show_from_date': show_from_date,
-            })
+    for course in courses_for_schedule:
+        covered_hours = ClassSchedule.objects.filter(
+            course=course
+        ).aggregate(total=Sum('covered_hours'))['total'] or Decimal('0.00')
 
-            class_schedule_summary = []
+        total_hours = Decimal(course.total_hours or 0)
+        remaining_hours = total_hours - covered_hours
 
-            courses_for_schedule = Course.objects.prefetch_related('lecturers__user')
+        if remaining_hours < 0:
+            remaining_hours = Decimal('0.00')
 
-            for course in courses_for_schedule:
-                covered_hours = ClassSchedule.objects.filter(
-                    course=course
-                ).aggregate(total=Sum('covered_hours'))['total'] or Decimal('0.00')
+        class_schedule_summary.append({
+            'course': course,
+            'total_hours': total_hours,
+            'covered_hours': covered_hours,
+            'remaining_hours': remaining_hours,
+        })
 
-                total_hours = Decimal(course.total_hours or 0)
-                remaining_hours = total_hours - covered_hours
+    # ---------------- UPCOMING CLASS SCHEDULES ----------------
+    today = timezone.now().date()
+    next_3_days = today + timedelta(days=3)
 
-                if remaining_hours < 0:
-                    remaining_hours = Decimal('0.00')
+    upcoming_class_schedules = ClassSchedule.objects.select_related(
+        'course',
+        'lecturer'
+    ).filter(
+        class_date__gte=today,
+        class_date__lte=next_3_days
+    ).order_by('class_date', 'start_time')
 
-                class_schedule_summary.append({
-                    'course': course,
-                    'total_hours': total_hours,
-                    'covered_hours': covered_hours,
-                    'remaining_hours': remaining_hours,
-                })
-
-            today = timezone.now().date()
-            next_3_days = today + timedelta(days=3)
-
-            upcoming_class_schedules = ClassSchedule.objects.select_related('course',  'lecturer'  ).filter(
-                class_date__gte=today,
-                class_date__lte=next_3_days ).order_by('class_date', 'start_time')
-
+    # ---------------- CONTEXT ----------------
     context = {
-
         'class_schedule_summary': class_schedule_summary,
         'upcoming_class_schedules': upcoming_class_schedules,
+
         'total_students': Student.objects.count(),
         'total_lecturers': Lecturer.objects.count(),
         'total_courses': Course.objects.count(),
@@ -278,7 +491,11 @@ def staff_dashboard(request):
         'total_balance_amount': total_balance_amount,
 
         'recent_students': Student.objects.select_related('user').order_by('-id')[:5],
-        'recent_payments': Payment.objects.select_related('student', 'student__user', 'course').order_by('-id')[:5],
+        'recent_payments': Payment.objects.select_related(
+            'student',
+            'student__user',
+            'course'
+        ).order_by('-id')[:5],
 
         'outstanding_balances': outstanding_balances,
 
@@ -303,7 +520,6 @@ def staff_dashboard(request):
     }
 
     return render(request, 'staffs/dashboard.html', context)
-
 @login_required
 @role_required('STAFF')
 def register_student(request):
@@ -452,6 +668,7 @@ def assign_course(request, course_id):
             'page_title': 'Assign Lecturer',
         }
     )
+
 @login_required
 @role_required('STAFF')
 def enroll_student(request):
@@ -462,61 +679,125 @@ def enroll_student(request):
         str(course.id): str(course.course_fee)
         for course in courses
     }
+
     if request.method == 'POST':
         form = EnrollmentForm(request.POST)
+
         if form.is_valid():
             enrollment = form.save()
 
             student_user = enrollment.student
             course = enrollment.course
 
+            # Get upcoming schedules
+            future_schedules = ClassSchedule.objects.filter(
+                course=course,
+                class_date__gte=timezone.now().date()
+            ).order_by('class_date')
+
+            schedule_text = ""
+
+            if future_schedules.exists():
+                for schedule in future_schedules[:5]:
+                    schedule_text += (
+                        f"\n• {schedule.class_date} "
+                        f"{schedule.start_time} - {schedule.end_time}"
+                    )
+            else:
+                schedule_text = "\nNo class schedules have been published yet."
+
+            # ---------------- EMAIL ---------------- #
+
             subject = "Course Enrollment Confirmation"
 
             message = f"""
-            Dear {student_user.get_full_name() or student_user.username},
-            You have been successfully enrolled in the following course:
-            Course: {course.course_code} - {course.course_name}
-            Mode of Study: {enrollment.mode_of_study}
-            Final Course Fee: {enrollment.final_course_fee}
-            Installments: {enrollment.number_of_installments}
-                Thank you.
-                Europe Campus Management
-                """
+Dear {student_user.get_full_name() or student_user.username},
 
-            send_email_notification(
-                subject,
-                message,
-                student_user.email
-            )
+Congratulations!
+
+You have been successfully enrolled in the following course:
+
+Course Code : {course.course_code}
+Course Name : {course.course_name}
+
+Mode of Study : {enrollment.mode_of_study}
+
+Course Fee : {enrollment.final_course_fee}
+
+Installments : {enrollment.number_of_installments}
+
+Upcoming Class Schedule:
+{schedule_text}
+
+Please log in to the student portal for the complete class schedule, notes, assignments, and payment details.
+
+Thank you.
+
+Europe Campus Management System
+"""
+
+            if student_user.email:
+                send_email_notification(
+                    subject,
+                    message,
+                    student_user.email
+                )
+
+            # ---------------- SMS ---------------- #
 
             sms_message = (
-                f"You have been enrolled in {course.course_name}. "
-                f"Mode: {enrollment.mode_of_study}. "
-                f"Fee: {enrollment.final_course_fee}. "
-                f"Installments: {enrollment.number_of_installments}."
+                f"Europe Campus\n"
+                f"Enrolled: {course.course_name}\n"
+                f"Fee: {enrollment.final_course_fee}\n"
+                f"Installments: {enrollment.number_of_installments}"
             )
 
-            send_sms_notification(student_user.phone, sms_message)
+            if future_schedules.exists():
+                first_schedule = future_schedules.first()
 
-            messages.success(request, 'Student enrolled successfully. Email notification sent.')
+                sms_message += (
+                    f"\nNext Class:"
+                    f"\n{first_schedule.class_date}"
+                    f" {first_schedule.start_time}"
+                )
+
+            try:
+                if student_user.phone:
+                    send_sms_notification(
+                        student_user.phone,
+                        sms_message
+                    )
+            except Exception as e:
+                print("SMS Error:", e)
+
+            messages.success(
+                request,
+                'Student enrolled successfully. Email and SMS notifications sent.'
+            )
+
             return redirect('enrollment_list')
+
         else:
-            messages.error(request, 'Enrollment failed. Please check the form.')
+            messages.error(
+                request,
+                'Enrollment failed. Please check the form.'
+            )
+
     else:
         form = EnrollmentForm()
-        courses = Course.objects.all()
 
-        course_fees = {
-            str(course.id): str(course.course_fee)
-            for course in courses
+    return render(
+        request,
+        'staffs/enroll_student.html',
+        {
+            'form': form,
+            'page_title': 'Enroll Student',
+            'course_fees_json': json.dumps(
+                course_fees,
+                cls=DjangoJSONEncoder
+            ),
         }
-
-    return render(request, 'staffs/enroll_student.html', {
-        'form': form,
-        'page_title': 'Enroll Student',
-        'course_fees_json': json.dumps(course_fees, cls=DjangoJSONEncoder),
-
-    })
+    )
 @login_required
 @role_required('STAFF')
 def enrollment_list(request):
@@ -583,7 +864,54 @@ def add_payment(request):
     if request.method == 'POST':
         form = PaymentForm(request.POST)
         if form.is_valid():
-            payment = form.save()
+            payment = form.save(commit=False)
+
+            enrollment = Enrollment.objects.filter(
+                student=payment.student.user,
+                course=payment.course
+            ).first()
+
+            if enrollment:
+                total_installments = enrollment.number_of_installments or 1
+                installment_amount = enrollment.final_course_fee / total_installments
+
+                already_paid = Payment.objects.filter(
+                    student=payment.student,
+                    course=payment.course,
+                    status='PAID'
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+                new_total_paid = already_paid + payment.amount
+
+                completed_installments = int(new_total_paid // installment_amount)
+
+                if completed_installments < 1:
+                    completed_installments = 1
+
+                if completed_installments > total_installments:
+                    completed_installments = total_installments
+
+                payment.installment_number = completed_installments
+                payment.total_installments = total_installments
+
+            payment.save()
+
+            generate_payment_invoice(payment)
+            payment.save()
+
+            student_profile = payment.student
+            student_user = student_profile.user
+
+            if student_profile.is_suspended:
+                student_profile.is_suspended = False
+                student_profile.suspended_reason = None
+                student_profile.suspended_at = None
+                student_profile.save()
+
+                student_user.is_active = True
+                student_user.save()
+
+                messages.success(request, "Student account reactivated after payment.")
 
             student_profile = payment.student
             student_user = student_profile.user
@@ -825,6 +1153,32 @@ def staff_create_class_schedule(request):
                 )
             else:
                 schedule.save()
+                notify_course_students(
+                    course=schedule.course,
+
+                    subject="New Class Schedule",
+
+                    email_message=f"""
+                New class schedule has been added.
+
+                Course:
+                {schedule.course.course_name}
+
+                Date:
+                {schedule.class_date}
+
+                Time:
+                {schedule.start_time} - {schedule.end_time}
+                """,
+
+                    sms_message=f"""
+                New class:
+                {schedule.course.course_name}
+
+                {schedule.class_date}
+                {schedule.start_time}
+                """
+                )
                 messages.success(request, 'Class schedule created successfully.')
                 return redirect('staff_class_schedule_list')
     else:
@@ -921,4 +1275,28 @@ def staff_create_class_schedule_range(request):
     return render(request, 'staffs/class_schedule_range_form.html', {
         'form': form,
         'page_title': 'Create Range Class Schedule',
+    })
+
+@login_required
+@role_required('STAFF')
+def get_course_lecturers(request):
+    course_id = request.GET.get('course_id')
+
+    lecturers_data = []
+
+    if course_id:
+        try:
+            course = Course.objects.prefetch_related('lecturers__user').get(id=course_id)
+
+            for lecturer in course.lecturers.all():
+                lecturers_data.append({
+                    'id': lecturer.user.id,
+                    'name': lecturer.user.get_full_name() or lecturer.user.username
+                })
+
+        except Course.DoesNotExist:
+            pass
+
+    return JsonResponse({
+        'lecturers': lecturers_data
     })

@@ -55,8 +55,10 @@
       <th>Course</th>
       <th>Course Fee</th>
       <th>Paid</th>
+        <th>Installment</th>
       <th>Status</th>
       <th>Date</th>
+        <th>Invoice</th>
     </tr>
   </thead>
 
@@ -79,6 +81,8 @@
 
       <td>{{ payment.amount | intcomma }}</td>
 
+    <td>{{ payment.installment_number }}/{{ payment.total_installments }}</td>
+
       <td>
         {% if payment.status == 'PAID' %}
           <span class="badge bg-success">Paid</span>
@@ -88,6 +92,15 @@
       </td>
 
       <td>{{ payment.payment_date }}</td>
+    <td>
+    {% if payment.invoice_pdf %}
+        <a href="{{ payment.invoice_pdf.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+            View / Print
+        </a>
+    {% else %}
+        <span class="badge bg-secondary">Not Generated</span>
+    {% endif %}
+</td>
 
     </tr>
     {% empty %}

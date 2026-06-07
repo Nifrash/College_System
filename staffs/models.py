@@ -2,7 +2,6 @@ from django.db import models
 from django.conf import settings
 from accounts.utils import generate_custom_id
 
-
 class Staff(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     staff_id = models.CharField(max_length=20, unique=True, blank=True)

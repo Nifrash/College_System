@@ -36,4 +36,34 @@
     </div>
 </div>
 
+    <script>
+    const courseSelect = document.getElementById("id_course");
+    const lecturerSelect = document.getElementById("id_lecturer");
+
+    function loadLecturersForCourse() {
+        const courseId = courseSelect.value;
+
+        lecturerSelect.innerHTML = '<option value="">---------</option>';
+
+        if (!courseId) {
+            return;
+        }
+
+        fetch("{% url 'get_course_lecturers' %}?course_id=" + courseId)
+            .then(response => response.json())
+            .then(data => {
+                data.lecturers.forEach(item => {
+                    const option = document.createElement("option");
+                    option.value = item.id;
+                    option.textContent = item.name;
+                    lecturerSelect.appendChild(option);
+                });
+            });
+    }
+
+    if (courseSelect && lecturerSelect) {
+        courseSelect.addEventListener("change", loadLecturersForCourse);
+        loadLecturersForCourse();
+    }
+</script>
 {% endblock %}

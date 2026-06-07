@@ -99,6 +99,8 @@
           <th>Method</th>
           <th>Status</th>
           <th>Reference</th>
+            <th>Installment</th>
+            <th>Invoice</th>
         </tr>
       </thead>
       <tbody>
@@ -108,6 +110,17 @@
           <td>{{ payment.payment_method }}</td>
           <td>{{ payment.status }}</td>
           <td>{{ payment.reference_no|default:"-" }}</td>
+        <td>{{ payment.installment_number }}/{{ payment.total_installments }}</td>
+        <td>
+            {% if payment.invoice_pdf %}
+                <a href="{{ payment.invoice_pdf.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    View / Print
+                </a>
+            {% else %}
+                -
+            {% endif %}
+</td>
+
         </tr>
         {% endfor %}
       </tbody>

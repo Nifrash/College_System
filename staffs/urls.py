@@ -28,4 +28,7 @@ urlpatterns = [
     path('class-schedules/create/', views.staff_create_class_schedule,  name='staff_create_class_schedule'),
 
     path('class-schedules/create-range/',    views.staff_create_class_schedule_range, name='staff_create_class_schedule_range'),
+
+    path( 'ajax/course-lecturers/', views.get_course_lecturers,  name='get_course_lecturers'),
+
 ]
