@@ -4,10 +4,20 @@
 
 {% block content %}
 
-<div class="mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <a href="{% url 'staff_dashboard' %}" class="btn btn-secondary">
         ← Back to Dashboard
     </a>
+
+    <div>
+        <a href="{% url 'staff_create_class_schedule' %}" class="btn btn-primary">
+            + Single Schedule
+        </a>
+
+        <a href="{% url 'staff_create_class_schedule_range' %}" class="btn btn-success">
+            + Range Schedule
+        </a>
+    </div>
 </div>
 
 <div class="card shadow-sm mb-4">

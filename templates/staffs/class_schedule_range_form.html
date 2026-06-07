@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Range Class Schedule{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+    <a href="{% url 'staff_class_schedule_list' %}" class="btn btn-secondary">
+        ← Back to Class Schedules
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">{{ page_title }}</h4>
+    </div>
+
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <div class="alert alert-info">
+                Covered hours will be calculated automatically from start time, end time, and selected weekdays.
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                Create Range Schedule
+            </button>
+
+            <a href="{% url 'staff_class_schedule_list' %}" class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

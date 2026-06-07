@@ -264,3 +264,65 @@ class StaffClassScheduleForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields['lecturer'].queryset = User.objects.filter(role='LECTURER')
+
+from learning.models import ClassSchedule
+from courses.models import Course
+from accounts.models import User
+
+
+class StaffClassScheduleRangeForm(forms.Form):
+    WEEKDAY_CHOICES = (
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday'),
+        (6, 'Sunday'),
+    )
+
+    course = forms.ModelChoiceField(
+        queryset=Course.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    lecturer = forms.ModelChoiceField(
+        queryset=User.objects.filter(role='LECTURER'),
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    title = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    start_date = forms.DateField(
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
+    )
+
+    end_date = forms.DateField(
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
+    )
+
+    weekdays = forms.MultipleChoiceField(
+        choices=WEEKDAY_CHOICES,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
+    start_time = forms.TimeField(
+        widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'})
+    )
+
+    end_time = forms.TimeField(
+        widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'})
+    )
+
+    mode = forms.ChoiceField(
+        choices=ClassSchedule.MODE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    location_or_link = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )

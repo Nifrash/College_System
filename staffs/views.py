@@ -2,7 +2,6 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Sum, Q
 from accounts.decorators import role_required
 from students.models import Student
 from lecturers.models import Lecturer
@@ -10,23 +9,19 @@ from courses.models import Course, Enrollment
 from payments.models import Payment
 from django.http import HttpResponse
 from openpyxl import Workbook
-from decimal import Decimal
-from django.db.models import Sum
-from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from .utils import send_email_notification, send_sms_notification
 import json
 from django.core.serializers.json import DjangoJSONEncoder
-from learning.models import ClassSchedule
 from django.db.models import Q
 from accounts.models import User
 from courses.models import Course
-from learning.models import ClassSchedule
-from learning.models import ClassSchedule
 from .forms import StaffClassScheduleForm
-from django.db.models import Sum
+from datetime import datetime, timedelta
 from decimal import Decimal
+from django.db.models import Sum
+from learning.models import ClassSchedule
 
 
 @login_required
@@ -838,4 +833,92 @@ def staff_create_class_schedule(request):
     return render(request, 'staffs/class_schedule_form.html', {
         'form': form,
         'page_title': 'Create Class Schedule',
+    })
+
+@login_required
+@role_required('STAFF')
+def staff_create_class_schedule_range(request):
+    if request.method == 'POST':
+        form = StaffClassScheduleRangeForm(request.POST)
+
+        if form.is_valid():
+            course = form.cleaned_data['course']
+            lecturer_user = form.cleaned_data['lecturer']
+            title = form.cleaned_data['title']
+            start_date = form.cleaned_data['start_date']
+            end_date = form.cleaned_data['end_date']
+            weekdays = [int(day) for day in form.cleaned_data['weekdays']]
+            start_time = form.cleaned_data['start_time']
+            end_time = form.cleaned_data['end_time']
+            mode = form.cleaned_data['mode']
+            location_or_link = form.cleaned_data['location_or_link']
+
+            if end_date < start_date:
+                messages.error(request, 'End date cannot be before start date.')
+                return redirect('staff_create_class_schedule_range')
+
+            start_dt = datetime.combine(start_date, start_time)
+            end_dt = datetime.combine(start_date, end_time)
+
+            if end_dt <= start_dt:
+                messages.error(request, 'End time must be after start time.')
+                return redirect('staff_create_class_schedule_range')
+
+            duration_hours = Decimal(
+                str((end_dt - start_dt).total_seconds() / 3600)
+            )
+
+            schedule_dates = []
+            current_date = start_date
+
+            while current_date <= end_date:
+                if current_date.weekday() in weekdays:
+                    schedule_dates.append(current_date)
+                current_date += timedelta(days=1)
+
+            if not schedule_dates:
+                messages.error(request, 'No matching class dates found.')
+                return redirect('staff_create_class_schedule_range')
+
+            total_new_hours = duration_hours * len(schedule_dates)
+
+            existing_hours = ClassSchedule.objects.filter(
+                course=course
+            ).aggregate(total=Sum('covered_hours'))['total'] or Decimal('0.00')
+
+            course_total_hours = Decimal(course.total_hours or 0)
+
+            if existing_hours + total_new_hours > course_total_hours:
+                messages.error(
+                    request,
+                    f'Schedule exceeds total course hours. '
+                    f'Existing: {existing_hours}, New: {total_new_hours}, '
+                    f'Course Total: {course_total_hours}.'
+                )
+                return redirect('staff_create_class_schedule_range')
+
+            for class_date in schedule_dates:
+                ClassSchedule.objects.create(
+                    course=course,
+                    lecturer=lecturer_user,
+                    title=title,
+                    class_date=class_date,
+                    start_time=start_time,
+                    end_time=end_time,
+                    mode=mode,
+                    location_or_link=location_or_link,
+                    covered_hours=duration_hours,
+                )
+
+            messages.success(
+                request,
+                f'{len(schedule_dates)} class schedules created successfully.'
+            )
+            return redirect('staff_class_schedule_list')
+    else:
+        form = StaffClassScheduleRangeForm()
+
+    return render(request, 'staffs/class_schedule_range_form.html', {
+        'form': form,
+        'page_title': 'Create Range Class Schedule',
     })
