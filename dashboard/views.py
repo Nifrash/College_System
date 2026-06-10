@@ -13,7 +13,8 @@ from django.utils import timezone
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
-
+from results.models import ExamResult
+from results.models import Exam, ExamAssignment, ExamAssignmentSubmission
 
 @login_required
 def dashboard_redirect(request):
@@ -57,9 +58,9 @@ def student_dashboard(request):
         'course__lecturers',
         'course__lecturers__user'
     )
+
     today = timezone.now()
     deadline_limit = today + timedelta(days=7)
-
     enrolled_courses = [enrollment.course for enrollment in enrollments]
 
     submitted_assignment_ids = AssignmentSubmission.objects.filter(
@@ -91,10 +92,67 @@ def student_dashboard(request):
         final_fee = enrollment.final_course_fee or Decimal('0.00')
         balance = final_fee - paid_amount
 
-        notes = CourseNote.objects.filter(course=course).order_by('-uploaded_at')
-        assignments = Assignment.objects.filter(course=course).order_by('-deadline')
-        payments = Payment.objects.filter(student=student_profile, course=course).order_by('-id')
-        submissions = AssignmentSubmission.objects.filter(student=request.user, assignment__course=course).select_related('assignment').order_by('assignment__semester', '-submitted_at')
+        notes = CourseNote.objects.filter(
+            course=course
+        ).order_by('-uploaded_at')
+
+        payments = Payment.objects.filter(
+            student=student_profile,
+            course=course
+        ).order_by('-id')
+
+        assignment_exams = ExamAssignment.objects.filter(
+            exam__course=course,
+            exam__exam_type='ASSIGNMENT'
+        ).select_related(
+            'exam',
+            'exam__course'
+        ).order_by('-deadline')
+
+        assignment_exam_details = []
+
+        for assignment in assignment_exams:
+            submission = ExamAssignmentSubmission.objects.filter(
+                assignment=assignment,
+                student=student_profile
+            ).first()
+
+            assignment_exam_details.append({
+                'assignment': assignment,
+                'submission': submission,
+            })
+
+        course_exam_results_qs = ExamResult.objects.filter(
+            student__user=request.user,
+
+            exam__course_id=course.id
+        ).select_related(
+            'exam',
+            'exam__course'
+        ).order_by('exam__exam_date')
+
+        course_exam_results = list(course_exam_results_qs)
+
+        course_total_results = len(course_exam_results)
+        course_passed = 0
+        course_failed = 0
+        course_total_percentage = 0
+
+        for result in course_exam_results:
+            course_total_percentage += result.percentage
+
+            if result.status == 'PASS':
+                course_passed += 1
+            else:
+                course_failed += 1
+
+        course_average = 0
+
+        if course_total_results > 0:
+            course_average = round(
+                course_total_percentage / course_total_results,
+                2
+            )
 
         total_fee += final_fee
         total_paid += paid_amount
@@ -104,20 +162,21 @@ def student_dashboard(request):
             'course': course,
             'lecturers': course.lecturers.all(),
             'notes': notes,
-            'assignments': assignments,
+            'assignment_exam_details': assignment_exam_details,
             'payments': payments,
-            'submissions': submissions,
+
+            'course_exam_results': course_exam_results,
+            'course_total_results': course_total_results,
+            'course_passed': course_passed,
+            'course_failed': course_failed,
+            'course_average': course_average,
+
             'final_fee': final_fee,
             'paid_amount': paid_amount,
             'balance': balance,
         })
 
     total_balance = total_fee - total_paid
-    today_date = timezone.now().date()
-    reminder_days = 7
-
-    today_date = timezone.now().date()
-    reminder_days = 7
 
     today_date = timezone.now().date()
     reminder_days = 7
@@ -126,7 +185,6 @@ def student_dashboard(request):
 
     for enrollment in enrollments:
         course = enrollment.course
-
         final_fee = enrollment.final_course_fee or Decimal('0.00')
         installments = enrollment.number_of_installments or 1
 
@@ -154,7 +212,7 @@ def student_dashboard(request):
         next_installment_no = completed_installments + 1
 
         amount_paid_towards_next = paid_amount - (
-                completed_installments * installment_amount
+            completed_installments * installment_amount
         )
 
         amount_due_now = installment_amount - amount_paid_towards_next
@@ -192,18 +250,3 @@ def student_dashboard(request):
     }
 
     return render(request, 'dashboard/student_dashboard.html', context)
-
-@login_required
-def enroll_course(request, course_id):
-    if request.user.role != "STUDENT":
-        return redirect("dashboard")
-
-    student_profile = get_object_or_404(Student, user=request.user)
-    course = get_object_or_404(Course, id=course_id)
-
-    Enrollment.objects.get_or_create(
-        student=student_profile,
-        course=course
-    )
-
-    return redirect("student_dashboard")

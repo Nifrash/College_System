@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Submit Assignment Exam{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+    <a href="{% url 'student_dashboard' %}" class="btn btn-secondary">
+        ← Back to Dashboard
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">Submit Assignment Exam</h4>
+    </div>
+
+    <div class="card-body">
+        <p><strong>Course:</strong> {{ assignment.exam.course.course_code }} - {{ assignment.exam.course.course_name }}</p>
+        <p><strong>Assignment:</strong> {{ assignment.exam.title }}</p>
+        <p><strong>Total Marks:</strong> {{ assignment.exam.total_marks }}</p>
+        <p><strong>Deadline:</strong> {{ assignment.deadline }}</p>
+
+        {% if assignment.instructions %}
+            <p><strong>Instructions:</strong> {{ assignment.instructions }}</p>
+        {% endif %}
+
+        {% if assignment.attachment %}
+            <p>
+                <strong>Assignment File:</strong>
+                <a href="{{ assignment.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    Download Assignment
+                </a>
+            </p>
+        {% endif %}
+
+        {% if existing_submission %}
+            <div class="alert alert-info">
+                You already submitted this assignment. Uploading again will replace your previous file.
+            </div>
+
+            <p>
+                <strong>Current Submission:</strong>
+                <a href="{{ existing_submission.submitted_file.url }}" target="_blank">
+                    View Submitted File
+                </a>
+            </p>
+
+            {% if existing_submission.is_late %}
+                <span class="badge bg-danger">Late Submission</span>
+            {% else %}
+                <span class="badge bg-success">Submitted On Time</span>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button type="submit" class="btn btn-success">
+                Submit Assignment
+            </button>
+
+            <a href="{% url 'student_dashboard' %}" class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

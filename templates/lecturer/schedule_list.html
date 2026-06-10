@@ -46,6 +46,7 @@
                     <td>{{ schedule.location_or_link|default:"-" }}</td>
                     <td>{{ schedule.covered_hours }}</td>
                 <td>
+                <a href="{% url 'mark_attendance' schedule.id %}" class="btn btn-sm btn-success"> Attendance </a>
                     {% if schedule.class_date >= today %}
                     <a href="{% url 'edit_schedule' schedule.id %}" class="btn btn-sm btn-warning"> Edit</a>
                     {% else %}

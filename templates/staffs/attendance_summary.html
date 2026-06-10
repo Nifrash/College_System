@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Summary{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Attendance Summary</h3>
+
+    <div>
+        <a href="{% url 'export_attendance_report' %}" class="btn btn-success">
+            Export Excel
+        </a>
+
+        <a href="{% url 'staff_dashboard' %}" class="btn btn-secondary">
+            Back
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Filter Attendance</h5>
+    </div>
+
+    <div class="card-body">
+        <form method="get" class="row g-3">
+
+            <div class="col-md-4">
+                <label class="form-label">Course</label>
+                <select name="course" class="form-select">
+                    <option value="">All Courses</option>
+                    {% for course in courses %}
+                        <option value="{{ course.id }}" {% if selected_course == course.id|stringformat:"s" %}selected{% endif %}>
+                            {{ course.course_code }} - {{ course.course_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-5">
+                <label class="form-label">Student Search</label>
+                <input type="text"
+                       name="q"
+                       value="{{ student_query }}"
+                       class="form-control"
+                       placeholder="Search by student ID, name, or username">
+            </div>
+
+            <div class="col-md-3 d-grid">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-dark">
+                    Filter
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- COURSE-WISE SUMMARY -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Course-wise Attendance %</h5>
+    </div>
+
+    <div class="card-body">
+        {% if course_summary %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Course</th>
+                        <th>Total Records</th>
+                        <th>Present</th>
+                        <th>Late</th>
+                        <th>Absent</th>
+                        <th>Excused</th>
+                        <th>Attendance %</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in course_summary %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <strong>{{ item.course.course_code }}</strong><br>
+                            <small>{{ item.course.course_name }}</small>
+                        </td>
+                        <td>{{ item.total }}</td>
+                        <td><span class="badge bg-success">{{ item.present }}</span></td>
+                        <td><span class="badge bg-warning text-dark">{{ item.late }}</span></td>
+                        <td><span class="badge bg-danger">{{ item.absent }}</span></td>
+                        <td><span class="badge bg-info text-dark">{{ item.excused }}</span></td>
+                        <td>
+                            <strong>{{ item.attendance_percentage }}%</strong>
+                            <div class="progress mt-1" style="height: 8px;">
+                                <div class="progress-bar bg-success"
+                                     style="width: {{ item.attendance_percentage }}%;">
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-info mb-0">
+                No course attendance data found.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- STUDENT-WISE SUMMARY -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Student-wise Attendance %</h5>
+    </div>
+
+    <div class="card-body">
+        {% if student_summary %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Student ID</th>
+                        <th>Student</th>
+                        <th>Total</th>
+                        <th>Present</th>
+                        <th>Late</th>
+                        <th>Absent</th>
+                        <th>Excused</th>
+                        <th>Attendance %</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in student_summary %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.student.student_id }}</td>
+                        <td>{{ item.student.user.get_full_name|default:item.student.user.username }}</td>
+                        <td>{{ item.total }}</td>
+                        <td><span class="badge bg-success">{{ item.present }}</span></td>
+                        <td><span class="badge bg-warning text-dark">{{ item.late }}</span></td>
+                        <td><span class="badge bg-danger">{{ item.absent }}</span></td>
+                        <td><span class="badge bg-info text-dark">{{ item.excused }}</span></td>
+                        <td>
+                            <strong>{{ item.attendance_percentage }}%</strong>
+                            <div class="progress mt-1" style="height: 8px;">
+                                <div class="progress-bar bg-primary"
+                                     style="width: {{ item.attendance_percentage }}%;">
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-info mb-0">
+                No student attendance data found.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ABSENT STUDENTS LIST -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Recent Absent Students</h5>
+    </div>
+
+    <div class="card-body">
+        {% if absent_students %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Course</th>
+                        <th>Student ID</th>
+                        <th>Student</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for attendance in absent_students %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ attendance.class_schedule.class_date }}</td>
+                        <td>
+                            {{ attendance.class_schedule.course.course_code }} -
+                            {{ attendance.class_schedule.course.course_name }}
+                        </td>
+                        <td>
+                            {% if attendance.student.student_profile %}
+                                {{ attendance.student.student_profile.student_id }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ attendance.student.get_full_name|default:attendance.student.username }}
+                        </td>
+                        <td>{{ attendance.remarks|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-success mb-0">
+                No absent students found.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

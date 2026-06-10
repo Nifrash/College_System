@@ -1,4 +1,6 @@
 from django import forms
+
+from results.models import ExamAssignmentSubmission
 from .models import CourseNote, Assignment, AssignmentSubmission
 from courses.models import Course
 from .models import ClassSchedule
@@ -128,3 +130,25 @@ class ClassScheduleRangeForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
+
+class MarkAssignmentExamForm(forms.ModelForm):
+
+    class Meta:
+        model = ExamAssignmentSubmission
+
+        fields = [
+            'marks',
+            'feedback'
+        ]
+
+        widgets = {
+            'marks': forms.NumberInput(
+                attrs={'class': 'form-control'}
+            ),
+            'feedback': forms.Textarea(
+                attrs={
+                    'class': 'form-control',
+                    'rows': 4
+                }
+            ),
+        }

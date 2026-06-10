@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Result Summary{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Result Summary</h3>
+
+    <a href="{% url 'result_list' %}" class="btn btn-secondary">
+        Back to Results
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        {% if course_summary %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Course</th>
+                        <th>Total Results</th>
+                        <th>Passed</th>
+                        <th>Failed</th>
+                        <th>Average %</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in course_summary %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+
+                        <td>
+                            <strong>{{ item.course.course_code }}</strong><br>
+                            {{ item.course.course_name }}
+                        </td>
+
+                        <td>{{ item.total_results }}</td>
+                        <td><span class="badge bg-success">{{ item.pass_count }}</span></td>
+                        <td><span class="badge bg-danger">{{ item.fail_count }}</span></td>
+                        <td>
+                            <strong>{{ item.average_percentage }}%</strong>
+                            <div class="progress mt-1" style="height: 8px;">
+                                <div class="progress-bar bg-primary"
+                                     style="width: {{ item.average_percentage }}%;">
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-info mb-0">
+                No result summary found.
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

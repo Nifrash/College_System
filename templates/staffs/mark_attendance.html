@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Mark Attendance{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+    <a href="{% url 'staff_attendance_schedule_list' %}" class="btn btn-secondary">
+        ← Back to Attendance
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">Mark Attendance</h4>
+    </div>
+
+    <div class="card-body">
+        <p><strong>Course:</strong> {{ schedule.course.course_code }} - {{ schedule.course.course_name }}</p>
+        <p><strong>Lecturer:</strong> {{ schedule.lecturer.get_full_name|default:schedule.lecturer.username }}</p>
+        <p><strong>Class:</strong> {{ schedule.title }}</p>
+        <p><strong>Date:</strong> {{ schedule.class_date }}</p>
+        <p><strong>Time:</strong> {{ schedule.start_time }} - {{ schedule.end_time }}</p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            {% if enrolled_students %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th>Status</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for enrollment in enrolled_students %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+
+                            <td>
+                                {% if enrollment.student.student_profile %}
+                                    {{ enrollment.student.student_profile.student_id }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ enrollment.student.get_full_name|default:enrollment.student.username }}
+                            </td>
+
+                            <td>
+                                <select name="status_{{ enrollment.student.id }}" class="form-select">
+                                    {% for value, label in status_choices %}
+                                        <option value="{{ value }}">
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+
+                            <td>
+                                <input type="text"
+                                       name="remarks_{{ enrollment.student.id }}"
+                                       class="form-control"
+                                       placeholder="Optional remarks">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                Save Attendance
+            </button>
+
+            {% else %}
+                <div class="alert alert-info">
+                    No students enrolled in this course.
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</form>
+
+{% endblock %}

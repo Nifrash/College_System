@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'payments',
     'staffs',
     'learning',
+    'results',
 ]
 
 MIDDLEWARE = [
@@ -149,7 +150,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = 'nifrash.ib@gmail.com'
-EMAIL_HOST_PASSWORD = 'fdkq xdyn rtwa ramc'
+EMAIL_HOST_PASSWORD = 'biur qiny gssv aboe'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

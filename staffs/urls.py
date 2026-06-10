@@ -30,5 +30,9 @@ urlpatterns = [
     path('class-schedules/create-range/',    views.staff_create_class_schedule_range, name='staff_create_class_schedule_range'),
 
     path( 'ajax/course-lecturers/', views.get_course_lecturers,  name='get_course_lecturers'),
+    path(  'attendance/',   views.staff_attendance_schedule_list,    name='staff_attendance_schedule_list'),
+    path(  'attendance/<int:schedule_id>/mark/',   views.staff_mark_attendance,   name='staff_mark_attendance'),
+    path(  'attendance-summary/', views.attendance_summary, name='attendance_summary' ),
+    path('attendance-summary/export/', views.export_attendance_report,  name='export_attendance_report'    ),
 
 ]

@@ -124,7 +124,7 @@
         <!-- STAFF SIDEBAR -->
         <div class="col-md-2 sidebar">
             <a href="{% url 'staff_dashboard' %}" class="brand-title">
-                🎓 College CMS
+                🎓 Europe-Campus-AKP
             </a>
 
             <nav class="nav flex-column">
@@ -137,7 +137,10 @@
                 <a class="nav-link" href="{% url 'course_list' %}">📖 Courses</a>
                 <a class="nav-link" href="{% url 'enroll_student' %}">📝 Enroll Student</a>
                 <a class="nav-link" href="{% url 'enrollment_list' %}">📋 Enrollments</a>
+                <a class="nav-link" href="{% url 'staff_attendance_schedule_list' %}"> ✅ Attendance</a>
+                <a class="nav-link" href="{% url 'attendance_summary' %}"> 📊 Attendance Summary</a>
                 <a class="nav-link" href="{% url 'payment_list' %}">💳 Payments</a>
+                <a class="nav-link" href="{% url 'exam_list' %}">🧾 Exam Results </a>
             </nav>
         </div>
 

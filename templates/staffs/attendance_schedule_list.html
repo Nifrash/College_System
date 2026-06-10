@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Schedules{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Attendance Management</h3>
+
+    <a href="{% url 'staff_dashboard' %}" class="btn btn-secondary">
+        ← Back to Dashboard
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        {% if schedules %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Course</th>
+                        <th>Lecturer</th>
+                        <th>Class Title</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Mode</th>
+                        <th>Hours</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for schedule in schedules %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            {{ schedule.course.course_code }} - {{ schedule.course.course_name }}
+                        </td>
+                        <td>
+                            {{ schedule.lecturer.get_full_name|default:schedule.lecturer.username }}
+                        </td>
+                        <td>{{ schedule.title }}</td>
+                        <td>{{ schedule.class_date }}</td>
+                        <td>{{ schedule.start_time }} - {{ schedule.end_time }}</td>
+                        <td>{{ schedule.mode }}</td>
+                        <td>{{ schedule.covered_hours }}</td>
+                        <td>
+                            <a href="{% url 'staff_mark_attendance' schedule.id %}"
+                               class="btn btn-sm btn-success">
+                                Mark Attendance
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-info mb-0">
+                No class schedules found.
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

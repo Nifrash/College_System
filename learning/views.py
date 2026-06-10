@@ -1,10 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
+
+from accounts.decorators import role_required
 from lecturers.models import Lecturer
 from courses.models import Course, Enrollment
 from .models import CourseNote, Assignment, AssignmentSubmission
-from .forms import CourseNoteForm, AssignmentForm, MarkSubmissionForm
+from .forms import CourseNoteForm, AssignmentForm, MarkSubmissionForm, MarkAssignmentExamForm
 from django.utils import timezone
 from .forms import AssignmentSubmissionForm
 from django.db.models import Q
@@ -18,6 +20,10 @@ from datetime import timedelta
 from django.utils import timezone
 from learning.models import ClassSchedule
 from django.utils import timezone
+from .models import Attendance
+from courses.models import Enrollment
+from results.models import ExamAssignmentSubmission, ExamResult
+
 
 def is_lecturer(user):
     return user.is_authenticated and user.role == 'LECTURER'
@@ -461,3 +467,127 @@ def edit_schedule(request, pk):
         'form': form,
         'page_title': 'Edit Class Schedule',
     })
+
+@login_required
+@user_passes_test(is_lecturer)
+def mark_attendance(request, schedule_id):
+    lecturer = get_object_or_404(Lecturer, user=request.user)
+
+    schedule = get_object_or_404(
+        ClassSchedule,
+        id=schedule_id,
+        course__lecturers=lecturer
+    )
+
+    enrolled_students = Enrollment.objects.filter(
+        course=schedule.course
+    ).select_related('student', 'student__student_profile')
+
+    if request.method == 'POST':
+        for enrollment in enrolled_students:
+            student_user = enrollment.student
+
+            status = request.POST.get(f'status_{student_user.id}')
+            remarks = request.POST.get(f'remarks_{student_user.id}', '')
+
+            if status:
+                Attendance.objects.update_or_create(
+                    class_schedule=schedule,
+                    student=student_user,
+                    defaults={
+                        'status': status,
+                        'remarks': remarks,
+                        'marked_by': request.user,
+                    }
+                )
+
+        messages.success(request, 'Attendance saved successfully.')
+        return redirect('schedule_list')
+
+    existing_attendance = {
+        attendance.student_id: attendance
+        for attendance in Attendance.objects.filter(class_schedule=schedule)
+    }
+
+    return render(request, 'lecturer/mark_attendance.html', {
+        'schedule': schedule,
+        'enrolled_students': enrolled_students,
+        'existing_attendance': existing_attendance,
+        'status_choices': Attendance.STATUS_CHOICES,
+    })
+
+@login_required
+@role_required('LECTURER')
+def lecturer_assignment_submissions(request):
+
+    lecturer = request.user.lecturer_profile
+
+    submissions = ExamAssignmentSubmission.objects.filter(
+        assignment__exam__course__lecturers=lecturer
+    ).select_related(
+        'student',
+        'student__user',
+        'assignment',
+        'assignment__exam',
+        'assignment__exam__course'
+    ).order_by('-submitted_at')
+
+    return render(
+        request,
+        'learning/assignment_submissions.html',
+        {
+            'submissions': submissions
+        }
+    )
+
+@login_required
+@role_required('LECTURER')
+def mark_assignment_exam(request, submission_id):
+
+    submission = get_object_or_404(
+        ExamAssignmentSubmission,
+        id=submission_id
+    )
+
+    if request.method == 'POST':
+
+        form = MarkAssignmentExamForm(
+            request.POST,
+            instance=submission
+        )
+
+        if form.is_valid():
+            submission = form.save()
+
+            if submission.marks is None:
+                messages.error(request, 'Please enter marks before publishing.')
+                return redirect('mark_assignment_exam', submission_id=submission.id)
+
+            exam_result, created = ExamResult.objects.update_or_create(
+                exam=submission.assignment.exam,
+                student=submission.student,
+                defaults={
+                    'obtained_marks': submission.marks,
+                    'remarks': submission.feedback or 'Assignment exam marked',
+                }
+            )
+
+            print("EXAM RESULT CREATED:", exam_result.id, created)
+
+            messages.success(request, 'Marks published successfully.')
+            return redirect('lecturer_assignment_submissions')
+
+    else:
+
+        form = MarkAssignmentExamForm(
+            instance=submission
+        )
+
+    return render(
+        request,
+        'learning/mark_assignment_exam.html',
+        {
+            'submission': submission,
+            'form': form
+        }
+    )

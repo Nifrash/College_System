@@ -23,6 +23,10 @@ urlpatterns = [
 
     path('lecturer/schedules/create-range/',  views.create_schedule_range,  name='create_schedule_range'),
     path('lecturer/schedules/<int:pk>/edit/',  views.edit_schedule, name='edit_schedule'),
+    path('lecturer/schedules/<int:schedule_id>/attendance/', views.mark_attendance,  name='mark_attendance'),
 
+    path(   'assignment-submissions/',  views.lecturer_assignment_submissions,  name='lecturer_assignment_submissions') ,
+
+    path('assignment-submissions/<int:submission_id>/mark/',views.mark_assignment_exam, name='mark_assignment_exam'),
 
 ]

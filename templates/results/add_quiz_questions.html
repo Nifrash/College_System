@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Quiz Questions{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+    <a href="{% url 'exam_list' %}" class="btn btn-secondary">
+        ← Back to Exams
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">Quiz Questions</h4>
+    </div>
+
+    <div class="card-body">
+        <p><strong>Course:</strong> {{ exam.course.course_code }} - {{ exam.course.course_name }}</p>
+        <p><strong>Quiz:</strong> {{ exam.title }}</p>
+        <p><strong>Total Marks:</strong> {{ exam.total_marks }}</p>
+        <p><strong>Question Marks Added:</strong> {{ total_question_marks }}</p>
+        <p><strong>Duration:</strong> {{ exam.duration_minutes }} minutes</p>
+        <p><strong>Deadline:</strong> {{ exam.deadline|default:"-" }}</p>
+    </div>
+</div>
+
+<div class="row">
+
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Add New Question</h5>
+            </div>
+
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    {{ form.as_p }}
+
+                    <button type="submit" class="btn btn-success">
+                        Add Question
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Existing Questions</h5>
+            </div>
+
+            <div class="card-body">
+
+                {% if questions %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Question</th>
+                                    <th>Correct</th>
+                                    <th>Marks</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for question in questions %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ question.question_text }}</td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            {{ question.correct_answer }}
+                                        </span>
+                                    </td>
+                                    <td>{{ question.marks }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info mb-0">
+                        No questions added yet.
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="mt-4">
+    <a href="{% url 'exam_list' %}" class="btn btn-primary">
+        Finish Quiz Setup
+    </a>
+</div>
+
+{% endblock %}

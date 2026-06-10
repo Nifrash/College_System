@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import CourseNote, Assignment, AssignmentSubmission, ClassSchedule
+from .models import Attendance
 
 
 @admin.register(CourseNote)
@@ -61,3 +62,27 @@ class ClassScheduleAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
 
     ordering = ('-class_date', 'start_time')
+
+@admin.register(Attendance)
+class AttendanceAdmin(admin.ModelAdmin):
+    list_display = (
+        'class_schedule',
+        'student',
+        'status',
+        'marked_by',
+        'marked_at',
+    )
+
+    list_filter = (
+        'status',
+        'class_schedule__course',
+        'class_schedule__class_date',
+    )
+
+    search_fields = (
+        'student__username',
+        'student__first_name',
+        'student__last_name',
+        'student__student_profile__student_id',
+        'class_schedule__course__course_name',
+    )

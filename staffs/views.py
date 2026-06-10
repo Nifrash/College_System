@@ -30,6 +30,14 @@ from learning.models import ClassSchedule
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from payments.utils import generate_payment_invoice
+from learning.models import ClassSchedule, Attendance
+from courses.models import Enrollment
+from django.http import HttpResponse
+from django.db.models import Count, Q
+import openpyxl
+from learning.models import Attendance
+from courses.models import Course, Enrollment
+from students.models import Student
 
 
 @login_required
@@ -1300,3 +1308,226 @@ def get_course_lecturers(request):
     return JsonResponse({
         'lecturers': lecturers_data
     })
+
+@login_required
+@role_required('STAFF')
+def staff_attendance_schedule_list(request):
+    schedules = ClassSchedule.objects.select_related(
+        'course',
+        'lecturer'
+    ).order_by('-class_date', 'start_time')
+
+    return render(request, 'staffs/attendance_schedule_list.html', {
+        'schedules': schedules,
+    })
+
+
+@login_required
+@role_required('STAFF')
+def staff_mark_attendance(request, schedule_id):
+    schedule = get_object_or_404(
+        ClassSchedule,
+        id=schedule_id
+    )
+
+    enrolled_students = Enrollment.objects.filter(
+        course=schedule.course
+    ).select_related('student', 'student__student_profile')
+
+    if request.method == 'POST':
+        for enrollment in enrolled_students:
+            student_user = enrollment.student
+
+            status = request.POST.get(f'status_{student_user.id}')
+            remarks = request.POST.get(f'remarks_{student_user.id}', '')
+
+            if status:
+                Attendance.objects.update_or_create(
+                    class_schedule=schedule,
+                    student=student_user,
+                    defaults={
+                        'status': status,
+                        'remarks': remarks,
+                        'marked_by': request.user,
+                    }
+                )
+
+        messages.success(request, 'Attendance saved successfully by staff.')
+        return redirect('staff_attendance_schedule_list')
+
+    existing_attendance = {
+        attendance.student_id: attendance
+        for attendance in Attendance.objects.filter(class_schedule=schedule)
+    }
+
+    return render(request, 'staffs/mark_attendance.html', {
+        'schedule': schedule,
+        'enrolled_students': enrolled_students,
+        'existing_attendance': existing_attendance,
+        'status_choices': Attendance.STATUS_CHOICES,
+    })
+
+@login_required
+@role_required('STAFF')
+def attendance_summary(request):
+    course_id = request.GET.get('course')
+    student_query = request.GET.get('q', '').strip()
+
+    courses = Course.objects.all().order_by('course_name')
+
+    attendances = Attendance.objects.select_related(
+        'class_schedule',
+        'class_schedule__course',
+        'student',
+        'student__student_profile'
+    )
+
+    if course_id:
+        attendances = attendances.filter(class_schedule__course_id=course_id)
+
+    if student_query:
+        attendances = attendances.filter(
+            Q(student__username__icontains=student_query) |
+            Q(student__first_name__icontains=student_query) |
+            Q(student__last_name__icontains=student_query) |
+            Q(student__student_profile__student_id__icontains=student_query)
+        )
+
+    # Course-wise attendance summary
+    course_summary = []
+
+    for course in courses:
+        course_attendance = Attendance.objects.filter(
+            class_schedule__course=course
+        )
+
+        total = course_attendance.count()
+        present = course_attendance.filter(status='PRESENT').count()
+        late = course_attendance.filter(status='LATE').count()
+        absent = course_attendance.filter(status='ABSENT').count()
+        excused = course_attendance.filter(status='EXCUSED').count()
+
+        attendance_percentage = 0
+
+        if total > 0:
+            attendance_percentage = round(((present + late) / total) * 100, 2)
+
+        course_summary.append({
+            'course': course,
+            'total': total,
+            'present': present,
+            'late': late,
+            'absent': absent,
+            'excused': excused,
+            'attendance_percentage': attendance_percentage,
+        })
+
+    # Student-wise attendance summary
+    student_summary = []
+
+    students = Student.objects.select_related('user').all()
+
+    for student in students:
+        student_attendance = attendances.filter(student=student.user)
+
+        total = student_attendance.count()
+        present = student_attendance.filter(status='PRESENT').count()
+        late = student_attendance.filter(status='LATE').count()
+        absent = student_attendance.filter(status='ABSENT').count()
+        excused = student_attendance.filter(status='EXCUSED').count()
+
+        attendance_percentage = 0
+
+        if total > 0:
+            attendance_percentage = round(((present + late) / total) * 100, 2)
+
+        if total > 0:
+            student_summary.append({
+                'student': student,
+                'total': total,
+                'present': present,
+                'late': late,
+                'absent': absent,
+                'excused': excused,
+                'attendance_percentage': attendance_percentage,
+            })
+
+    # Absent students list
+    absent_students = attendances.filter(
+        status='ABSENT'
+    ).order_by(
+        '-class_schedule__class_date'
+    )[:50]
+
+    return render(request, 'staffs/attendance_summary.html', {
+        'courses': courses,
+        'course_summary': course_summary,
+        'student_summary': student_summary,
+        'absent_students': absent_students,
+        'selected_course': course_id,
+        'student_query': student_query,
+    })
+
+
+@login_required
+@role_required('STAFF')
+def export_attendance_report(request):
+    workbook = openpyxl.Workbook()
+
+    sheet = workbook.active
+    sheet.title = "Attendance Report"
+
+    headers = [
+        'Student ID',
+        'Student Name',
+        'Username',
+        'Course Code',
+        'Course Name',
+        'Class Title',
+        'Class Date',
+        'Start Time',
+        'End Time',
+        'Status',
+        'Remarks',
+        'Marked By',
+        'Marked At',
+    ]
+
+    sheet.append(headers)
+
+    attendances = Attendance.objects.select_related(
+        'class_schedule',
+        'class_schedule__course',
+        'student',
+        'student__student_profile',
+        'marked_by'
+    ).order_by('-class_schedule__class_date')
+
+    for attendance in attendances:
+        student_profile = getattr(attendance.student, 'student_profile', None)
+
+        sheet.append([
+            student_profile.student_id if student_profile else '',
+            attendance.student.get_full_name() or attendance.student.username,
+            attendance.student.username,
+            attendance.class_schedule.course.course_code,
+            attendance.class_schedule.course.course_name,
+            attendance.class_schedule.title,
+            attendance.class_schedule.class_date,
+            str(attendance.class_schedule.start_time),
+            str(attendance.class_schedule.end_time),
+            attendance.status,
+            attendance.remarks,
+            attendance.marked_by.username if attendance.marked_by else '',
+            attendance.marked_at.strftime('%Y-%m-%d %H:%M') if attendance.marked_at else '',
+        ])
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+    response['Content-Disposition'] = 'attachment; filename=attendance_report.xlsx'
+
+    workbook.save(response)
+
+    return response

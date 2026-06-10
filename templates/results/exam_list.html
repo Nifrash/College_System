@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Exams{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Exam Management</h3>
+
+    <div>
+
+    <a href="{% url 'result_list' %}" class="btn btn-success">
+    View Results
+</a>
+
+    <a href="{% url 'create_exam' %}" class="btn btn-primary">
+        + Create Exam
+    </a>
+    </div>
+
+
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        {% if exams %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Course</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Total Marks</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for exam in exams %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ exam.course.course_code }} - {{ exam.course.course_name }}</td>
+                        <td>{{ exam.title }}</td>
+                        <td>{{ exam.get_exam_type_display }}</td>
+                        <td>{{ exam.total_marks }}</td>
+                        <td>{{ exam.exam_date }}</td>
+                       <td>
+                            {% if exam.exam_type == 'QUIZ' %}
+                                <a href="{% url 'add_quiz_questions' exam.id %}" class="btn btn-sm btn-primary">
+                                    Questions
+                                </a>
+                            {% endif %}
+
+                            {% if exam.exam_type == 'ASSIGNMENT' %}
+                                <a href="{% url 'add_exam_assignment' exam.id %}" class="btn btn-sm btn-warning">
+                                    Assignment File
+                                </a>
+                            {% endif %}
+
+                            <a href="{% url 'enter_exam_marks' exam.id %}" class="btn btn-sm btn-success">
+                                Enter Marks
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-info mb-0">
+                No exams created yet.
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

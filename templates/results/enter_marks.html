@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Enter Marks{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+    <a href="{% url 'exam_list' %}" class="btn btn-secondary">
+        ← Back to Exams
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">Enter Marks</h4>
+    </div>
+
+    <div class="card-body">
+        <p><strong>Course:</strong> {{ exam.course.course_code }} - {{ exam.course.course_name }}</p>
+        <p><strong>Exam:</strong> {{ exam.title }}</p>
+        <p><strong>Type:</strong> {{ exam.get_exam_type_display }}</p>
+        <p><strong>Total Marks:</strong> {{ exam.total_marks }}</p>
+        <p><strong>Date:</strong> {{ exam.exam_date }}</p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            {% if enrollments %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th>Marks</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for enrollment in enrollments %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+
+                            <td>
+                                {% if enrollment.student.student_profile %}
+                                    {{ enrollment.student.student_profile.student_id }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ enrollment.student.get_full_name|default:enrollment.student.username }}
+                            </td>
+
+                            <td>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max="{{ exam.total_marks }}"
+                                    name="marks_{{ enrollment.student.student_profile.id }}"
+                                    class="form-control"
+                                    placeholder="Enter marks">
+                            </td>
+
+                            <td>
+                                <input
+                                    type="text"
+                                    name="remarks_{{ enrollment.student.student_profile.id }}"
+                                    class="form-control"
+                                    placeholder="Optional remarks">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                Save Marks
+            </button>
+
+            {% else %}
+                <div class="alert alert-info">
+                    No students enrolled in this course.
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</form>
+
+{% endblock %}

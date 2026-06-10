@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Online Quizzes{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+    <a href="{% url 'student_dashboard' %}" class="btn btn-secondary">
+        ← Back to Dashboard
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h4 class="mb-0">My Online Quizzes</h4>
+    </div>
+
+    <div class="card-body">
+
+        {% if quizzes %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Course</th>
+                        <th>Quiz</th>
+                        <th>Total Marks</th>
+                        <th>Duration</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for quiz in quizzes %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+
+                        <td>
+                            <strong>{{ quiz.course.course_code }}</strong><br>
+                            <small>{{ quiz.course.course_name }}</small>
+                        </td>
+
+                        <td>{{ quiz.title }}</td>
+                        <td>{{ quiz.total_marks }}</td>
+                        <td>{{ quiz.duration_minutes }} minutes</td>
+                        <td>{{ quiz.deadline|default:"-" }}</td>
+
+                        <td>
+                            {% if quiz.id in submitted_exam_ids %}
+                                <span class="badge bg-success">Submitted</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if quiz.id in submitted_exam_ids %}
+                                <span class="text-muted">Completed</span>
+                            {% else %}
+                                <a href="{% url 'start_quiz' quiz.id %}" class="btn btn-sm btn-primary">
+                                    Start Quiz
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-info mb-0">
+                No online quizzes available.
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

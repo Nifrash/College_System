@@ -2,7 +2,6 @@ from django.db import models
 from django.conf import settings
 from courses.models import Course
 
-
 class CourseNote(models.Model):
     SEMESTER_CHOICES = (
         ('SEM1', 'Semester 1'),
@@ -78,3 +77,47 @@ class ClassSchedule(models.Model):
 
     def __str__(self):
         return f"{self.course} - {self.class_date}"
+
+class Attendance(models.Model):
+    STATUS_CHOICES = (
+        ('PRESENT', 'Present'),
+        ('ABSENT', 'Absent'),
+        ('LATE', 'Late'),
+        ('EXCUSED', 'Excused'),
+    )
+
+    class_schedule = models.ForeignKey(
+        ClassSchedule,
+        on_delete=models.CASCADE,
+        related_name='attendances'
+    )
+
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'STUDENT'}
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='PRESENT'
+    )
+
+    remarks = models.CharField(max_length=255, blank=True)
+    marked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='marked_attendances'
+    )
+
+    marked_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('class_schedule', 'student')
+
+    def __str__(self):
+        return f"{self.class_schedule} - {self.student} - {self.status}"
+

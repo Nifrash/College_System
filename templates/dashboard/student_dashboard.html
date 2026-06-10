@@ -18,6 +18,7 @@
         border: 0;
         border-radius: 18px;
         box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+        margin-bottom: 25px;
     }
 
     .stat-card {
@@ -97,14 +98,13 @@
 </div>
 
 <!-- STUDENT PROFILE -->
-<div class="card section-card mb-4">
+<div class="card section-card">
     <div class="card-header bg-white border-0">
         <h5 class="mb-0">Student Profile</h5>
     </div>
 
     <div class="card-body">
         <div class="row g-4">
-
             <div class="col-md-3 text-center">
                 {% if student.student_image %}
                     <img src="{{ student.student_image.url }}" class="img-thumbnail rounded" width="170">
@@ -153,11 +153,10 @@
 
                 <div class="mt-3">
                     <a href="{% url 'student_update' %}" class="btn btn-warning btn-sm">
-                        Edit Profile
+                        Edit Profile Picture
                     </a>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
@@ -169,7 +168,6 @@
     </div>
 
     <div class="card-body">
-
         {% if course_details %}
 
             <ul class="nav nav-pills mb-4" role="tablist">
@@ -179,7 +177,7 @@
                             data-bs-toggle="pill"
                             data-bs-target="#course-{{ item.course.id }}"
                             type="button">
-                         {{ item.course.course_name }}
+                        {{ item.course.course_name }}
                     </button>
                 </li>
                 {% endfor %}
@@ -191,25 +189,20 @@
                      id="course-{{ item.course.id }}">
 
                     <div class="course-box">
-
                         <h4>{{ item.course.course_code }} - {{ item.course.course_name }}</h4>
                         <p class="text-muted">{{ item.course.description|default:"No description available." }}</p>
 
                         <div class="row g-3 mb-4">
                             <div class="col-md-3">
-                                <strong>Lecturer</strong>
+                                <strong>Lecturers</strong>
                                 <p>
-                                    {% if item.lecturer %}
-                                        {% for lecturer in item.course.lecturers.all %}
+                                    {% for lecturer in item.lecturers %}
                                         <span class="badge bg-primary">
                                             {{ lecturer.user.get_full_name|default:lecturer.user.username }}
                                         </span>
                                     {% empty %}
-                                        Not Assigned
+                                        <span class="badge bg-secondary">Not Assigned</span>
                                     {% endfor %}
-                                    {% else %}
-                                        Not Assigned
-                                    {% endif %}
                                 </p>
                             </div>
 
@@ -234,291 +227,301 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
                                 <div class="alert alert-primary">
-                                    Final Fee: <strong>{{ item.final_fee|floatformat:2|intcomma }}</strong>
+                                    Final Fee:
+                                    <strong>{{ item.final_fee|floatformat:2|intcomma }}</strong>
                                 </div>
                             </div>
+
                             <div class="col-md-4">
                                 <div class="alert alert-success">
-                                    Paid: <strong>{{ item.paid_amount|floatformat:2|intcomma }}</strong>
+                                    Paid:
+                                    <strong>{{ item.paid_amount|floatformat:2|intcomma }}</strong>
                                 </div>
                             </div>
+
                             <div class="col-md-4">
                                 <div class="alert alert-danger">
-                                    Balance: <strong>{{ item.balance|floatformat:2|intcomma }}</strong>
+                                    Balance:
+                                    <strong>{{ item.balance|floatformat:2|intcomma }}</strong>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- NOTES -->
+                        <!-- COURSE NOTES -->
                         <h5>Course Notes</h5>
                         {% if item.notes %}
-                        <table class="table table-bordered table-striped mb-4">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Semester</th>
-                                    <th>Description</th>
-                                    <th>File</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for note in item.notes %}
-                                <tr>
-                                    <td>{{ note.title }}</td>
-                                    <td>{{ note.semester }}</td>
-                                    <td>{{ note.description|default:"-" }}</td>
-                                    <td>
-                                        <a href="{{ note.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                            Download
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-4">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Semester</th>
+                                        <th>Description</th>
+                                        <th>File</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {% for note in item.notes %}
+                                    <tr>
+                                        <td>{{ note.title }}</td>
+                                        <td>{{ note.semester }}</td>
+                                        <td>{{ note.description|default:"-" }}</td>
+                                        <td>
+                                            {% if note.file %}
+                                                <a href="{{ note.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    Download
+                                                </a>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                         {% else %}
                             <div class="alert alert-info">No notes uploaded yet.</div>
                         {% endif %}
+{##}
+{#                        <!-- NORMAL COURSE ASSIGNMENTS -->#}
+{#                        <h5>Assignments</h5>#}
+{#                        {% if item.assignments %}#}
+{#                        <div class="table-responsive">#}
+{#                            <table class="table table-bordered table-striped mb-4">#}
+{#                                <thead>#}
+{#                                    <tr>#}
+{#                                        <th>Title</th>#}
+{#                                        <th>Semester</th>#}
+{#                                        <th>Deadline</th>#}
+{#                                        <th>File</th>#}
+{#                                        <th>Submission</th>#}
+{#                                    </tr>#}
+{#                                </thead>#}
+{##}
+{#                                <tbody>#}
+{#                                    {% for assignment in item.assignments %}#}
+{#                                    <tr>#}
+{#                                        <td>{{ assignment.title }}</td>#}
+{#                                        <td>{{ assignment.semester }}</td>#}
+{#                                        <td>{{ assignment.deadline }}</td>#}
+{#                                        <td>#}
+{#                                            {% if assignment.file %}#}
+{#                                                <a href="{{ assignment.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">#}
+{#                                                    Download#}
+{#                                                </a>#}
+{#                                            {% else %}#}
+{#                                                -#}
+{#                                            {% endif %}#}
+{#                                        </td>#}
+{##}
+{#                                        <td>#}
+{#                                            {% with found_submission=False %}#}
+{#                                                {% for submission in item.submissions %}#}
+{#                                                    {% if submission.assignment.id == assignment.id %}#}
+{#                                                        <span class="badge bg-success">Submitted</span>#}
+{#                                                        <br>#}
+{#                                                        <small>Marks: {{ submission.marks|default:"Pending" }}</small>#}
+{#                                                        <br>#}
+{#                                                        <a href="{% url 'submit_assignment' assignment.id %}" class="btn btn-sm btn-outline-warning mt-1">#}
+{#                                                            Replace File#}
+{#                                                        </a>#}
+{#                                                    {% endif %}#}
+{#                                                {% endfor %}#}
+{##}
+{#                                                <br>#}
+{#                                                <a href="{% url 'submit_assignment' assignment.id %}" class="btn btn-sm btn-primary mt-1">#}
+{#                                                    Submit#}
+{#                                                </a>#}
+{#                                            {% endwith %}#}
+{#                                        </td>#}
+{#                                    </tr>#}
+{#                                    {% endfor %}#}
+{#                                </tbody>#}
+{#                            </table>#}
+{#                        </div>#}
+{#                        {% else %}#}
+{#                            <div class="alert alert-info">No assignments created yet.</div>#}
+{#                        {% endif %}#}
 
-                        <!-- ASSIGNMENTS -->
-                        <h5>Assignments</h5>
-                        {% if item.assignments %}
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Semester</th>
-                                    <th>Deadline</th>
-                                    <th>File</th>
-                                    <th>Submission</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for assignment in item.assignments %}
-                                <tr>
-                                    <td>{{ assignment.title }}</td>
-                                    <td>{{ assignment.semester }}</td>
-                                    <td>{{ assignment.deadline }}</td>
-                                    <td>
-                                        {% if assignment.file %}
-                                            <a href="{{ assignment.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                Download
+                        <!-- ASSIGNMENT EXAMS - COURSE SPECIFIC -->
+                        <h5>Assignment Exams</h5>
+                        {% if item.assignment_exam_details %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped align-middle mb-4">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Assignment</th>
+                                        <th>Total Marks</th>
+                                        <th>Deadline</th>
+                                        <th>Instructions</th>
+                                        <th>Attachment</th>
+                                        <th>Submission</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {% for exam_item in item.assignment_exam_details %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+
+                                        <td>{{ exam_item.assignment.exam.title }}</td>
+
+                                        <td>{{ exam_item.assignment.exam.total_marks }}</td>
+
+                                        <td>
+                                            <span class="badge bg-warning text-dark">
+                                                {{ exam_item.assignment.deadline }}
+                                            </span>
+                                        </td>
+
+                                        <td>{{ exam_item.assignment.instructions|default:"-" }}</td>
+
+                                        <td>
+                                            {% if exam_item.assignment.attachment %}
+                                                <a href="{{ exam_item.assignment.attachment.url }}"
+                                                   target="_blank"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    Download
+                                                </a>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            {% if exam_item.submission %}
+                                                <span class="badge bg-success">Submitted</span>
+
+                                                {% if exam_item.submission.is_late %}
+                                                    <span class="badge bg-danger">Late</span>
+                                                {% else %}
+                                                    <span class="badge bg-primary">On Time</span>
+                                                {% endif %}
+
+                                                <br>
+
+                                                <a href="{{ exam_item.submission.submitted_file.url }}"
+                                                   target="_blank"
+                                                   class="btn btn-sm btn-outline-secondary mt-1">
+                                                    View File
+                                                </a>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">
+                                                    Not Submitted
+                                                </span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            <a href="{% url 'submit_exam_assignment' exam_item.assignment.id %}"
+                                               class="btn btn-sm btn-success">
+                                                Submit / Replace
                                             </a>
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                         {% with submitted=False %}
-                    {% for submission in assignment.assignmentsubmission_set.all %}
-                        {% if submission.student == request.user %}
-                            <span class="badge bg-success">Submitted</span>
-                            <br>
-                            <small>Marks: {{ submission.marks|default:"Pending" }}</small>
-                            <br>
-                            <a href="{% url 'submit_assignment' assignment.id %}" class="btn btn-sm btn-outline-warning mt-1">
-                                Replace File
-                            </a>
-                        {% endif %}
-                    {% endfor %}
-
-                    <a href="{% url 'submit_assignment' assignment.id %}" class="btn btn-sm btn-primary mt-1">
-                        Submit
-                    </a>
-                {% endwith %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        {% else %}
-                            <div class="alert alert-info">No assignments created yet.</div>
-                        {% endif %}
-                    <div class="card section-card mb-4">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Upcoming Assignment Deadlines</h5>
-        <span class="badge bg-danger">Next 7 Days</span>
-    </div>
-
-    <div class="card-body">
-        {% if upcoming_deadlines %}
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped align-middle">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Course</th>
-                            <th>Assignment</th>
-                            <th>Semester</th>
-                            <th>Deadline</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for assignment in upcoming_deadlines %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>{{ assignment.course.course_name }}</td>
-                            <td>{{ assignment.title }}</td>
-                            <td>{{ assignment.semester }}</td>
-                            <td>
-                                <span class="badge bg-warning text-dark">
-                                    {{ assignment.deadline }}
-                                </span>
-                            </td>
-                            <td>
-                                <a href="{% url 'submit_assignment' assignment.id %}" class="btn btn-sm btn-primary">
-                                    Submit Now
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="alert alert-success mb-0">
-                No upcoming assignment deadlines within the next 7 days.
-            </div>
-        {% endif %}
-    </div>
-</div>
-                                        <!-- MARKS -->
-                    <h5 class="mt-4">Assignment Marks</h5>
-
-                    {% if item.submissions %}
-                    <table class="table table-bordered table-striped">
-                        <thead>
-                            <tr>
-                                <th>Semester</th>
-                                <th>Assignment</th>
-                                <th>Submitted Date</th>
-                                <th>Marks</th>
-                                <th>Feedback</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {% for submission in item.submissions %}
-                            <tr>
-                                <td>{{ submission.assignment.semester }}</td>
-                                <td>{{ submission.assignment.title }}</td>
-                                <td>{{ submission.submitted_at }}</td>
-                                <td>
-                                    {% if submission.marks %}
-                                        <span class="badge bg-success">
-                                            {{ submission.marks }}
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-warning text-dark">
-                                            Pending
-                                        </span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ submission.feedback|default:"-" }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                        <div class="alert alert-info">
-                            No assignment marks available yet.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
-                    {% endif %}
+                        {% else %}
+                            <div class="alert alert-info">No assignment exams available for this course.</div>
+                        {% endif %}
 
-                    <div class="card section-card mb-4">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Payment Installment Reminder</h5>
-        <span class="badge bg-warning text-dark">Due Soon</span>
-    </div>
+                        <!-- ASSIGNMENT MARKS -->
+                        <h5 class="mt-4">Assignment Marks</h5>
+                        {% if item.submissions %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-4">
+                                <thead>
+                                    <tr>
+                                        <th>Semester</th>
+                                        <th>Assignment</th>
+                                        <th>Submitted Date</th>
+                                        <th>Marks</th>
+                                        <th>Feedback</th>
+                                    </tr>
+                                </thead>
 
-    <div class="card-body">
-        {% if installment_reminders %}
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped align-middle">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Course</th>
-                            <th>Installment</th>
-                            <th>Due Date</th>
-                            <th>Amount Due Now</th>
-                            <th>Remaining Balance</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for item in installment_reminders %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>
-                                {{ item.course.course_code }} - {{ item.course.course_name }}
-                            </td>
-                            <td>
-                                <span class="badge bg-primary">
-                                    {{ item.installment_no }} / {{ item.total_installments }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge bg-danger">
-                                    {{ item.next_due_date }}
-                                </span>
-                            </td>
-                            <td class="text-danger fw-bold">
-                                {{ item.amount_due_now|floatformat:2|intcomma }}
-                            </td>
-                            <td>
-                                {{ item.remaining_balance|floatformat:2|intcomma }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="alert alert-success mb-0">
-                No payment installment is due soon.
-            </div>
-        {% endif %}
-    </div>
-</div>
+                                <tbody>
+                                    {% for submission in item.submissions %}
+                                    <tr>
+                                        <td>{{ submission.assignment.semester }}</td>
+                                        <td>{{ submission.assignment.title }}</td>
+                                        <td>{{ submission.submitted_at }}</td>
+                                        <td>
+                                            {% if submission.marks %}
+                                                <span class="badge bg-success">
+                                                    {{ submission.marks }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">
+                                                    Pending
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ submission.feedback|default:"-" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                No assignment marks available yet.
+                            </div>
+                        {% endif %}
 
                         <!-- PAYMENT HISTORY -->
                         <h5>Payment History</h5>
                         {% if item.payments %}
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Reference</th>
-                                    <th>Amount</th>
-                                    <th>Method</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for payment in item.payments %}
-                                <tr>
-                                    <td>{{ payment.reference_no }}</td>
-                                    <td>{{ payment.amount|floatformat:2|intcomma }}</td>
-                                    <td>{{ payment.payment_method }}</td>
-                                    <td>
-                                        {% if payment.status == 'PAID' %}
-                                            <span class="badge bg-success">Paid</span>
-                                        {% else %}
-                                            <span class="badge bg-warning text-dark">Pending</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ payment.payment_date }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Reference</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Invoice</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {% for payment in item.payments %}
+                                    <tr>
+                                        <td>{{ payment.reference_no }}</td>
+                                        <td>{{ payment.amount|floatformat:2|intcomma }}</td>
+                                        <td>{{ payment.payment_method }}</td>
+                                        <td>
+                                            {% if payment.status == 'PAID' %}
+                                                <span class="badge bg-success">Paid</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ payment.payment_date }}</td>
+                                        <td>
+                                            {% if payment.invoice_pdf %}
+                                                <a href="{{ payment.invoice_pdf.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    View / Print
+                                                </a>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                         {% else %}
                             <div class="alert alert-info">No payment history found for this course.</div>
                         {% endif %}
-
                     </div>
                 </div>
                 {% endfor %}
@@ -529,8 +532,213 @@
                 You are not enrolled in any courses yet.
             </div>
         {% endif %}
-
     </div>
 </div>
+
+<!-- UPCOMING ASSIGNMENT DEADLINES - GLOBAL -->
+<div class="card section-card">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Upcoming Assignment Deadlines</h5>
+        <span class="badge bg-danger">Next 7 Days</span>
+    </div>
+
+    <div class="card-body">
+        {% if upcoming_deadlines %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Course</th>
+                        <th>Assignment</th>
+                        <th>Semester</th>
+                        <th>Deadline</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for assignment in upcoming_deadlines %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ assignment.course.course_name }}</td>
+                        <td>{{ assignment.title }}</td>
+                        <td>{{ assignment.semester }}</td>
+                        <td>
+                            <span class="badge bg-warning text-dark">
+                                {{ assignment.deadline }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'submit_assignment' assignment.id %}" class="btn btn-sm btn-primary">
+                                Submit Now
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-success mb-0">
+                No upcoming assignment deadlines within the next 7 days.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- PAYMENT INSTALLMENT REMINDER - GLOBAL -->
+<div class="card section-card">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Payment Installment Reminder</h5>
+        <span class="badge bg-warning text-dark">Due Soon</span>
+    </div>
+
+    <div class="card-body">
+        {% if installment_reminders %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Course</th>
+                        <th>Installment</th>
+                        <th>Due Date</th>
+                        <th>Amount Due Now</th>
+                        <th>Remaining Balance</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for reminder in installment_reminders %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ reminder.course.course_code }} - {{ reminder.course.course_name }}</td>
+                        <td>
+                            <span class="badge bg-primary">
+                                {{ reminder.installment_no }} / {{ reminder.total_installments }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-danger">
+                                {{ reminder.next_due_date }}
+                            </span>
+                        </td>
+                        <td class="text-danger fw-bold">
+                            {{ reminder.amount_due_now|floatformat:2|intcomma }}
+                        </td>
+                        <td>
+                            {{ reminder.remaining_balance|floatformat:2|intcomma }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-success mb-0">
+                No payment installment is due soon.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ONLINE QUIZZES -->
+<div class="card section-card">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Online Quizzes</h5>
+        <a href="{% url 'student_quiz_list' %}" class="btn btn-primary btn-sm">
+            View Quizzes
+        </a>
+    </div>
+
+    <div class="card-body">
+        <p class="mb-0 text-muted">
+            View available online quizzes, start pending quizzes, and check submitted quiz results.
+        </p>
+    </div>
+</div>
+
+<!-- ACADEMIC RESULTS - COURSE SPECIFIC -->
+<h5 class="mt-4">Academic Results for {{ item.course.course_name }}</h5>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="alert alert-primary">
+            Total Exams<br>
+            <strong>{{ item.course_total_results }}</strong>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="alert alert-success">
+            Passed<br>
+            <strong>{{ item.course_passed }}</strong>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="alert alert-danger">
+            Failed<br>
+            <strong>{{ item.course_failed }}</strong>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="alert alert-info">
+            Average<br>
+            <strong>{{ item.course_average }}%</strong>
+        </div>
+    </div>
+</div>
+
+    {#{% if item.course_total_results > 0 %}#}
+    {% if item.course_total_results > 0 %}
+<div class="table-responsive">
+    <table class="table table-bordered table-striped align-middle mb-4">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Exam</th>
+                <th>Type</th>
+                <th>Marks</th>
+                <th>Percentage</th>
+                <th>Grade</th>
+                <th>Status</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for result in item.course_exam_results %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ result.exam.title }}</td>
+                <td>{{ result.exam.get_exam_type_display }}</td>
+                <td>{{ result.obtained_marks }} / {{ result.exam.total_marks }}</td>
+                <td>{{ result.percentage }}%</td>
+                <td>
+                    <span class="badge bg-primary">
+                        {{ result.grade }}
+                    </span>
+                </td>
+                <td>
+                    {% if result.status == 'PASS' %}
+                        <span class="badge bg-success">PASS</span>
+                    {% else %}
+                        <span class="badge bg-danger">FAIL</span>
+                    {% endif %}
+                </td>
+                <td>{{ result.remarks|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="alert alert-info">
+        No academic results available for this course.
+    </div>
+{% endif %}
 
 {% endblock %}
